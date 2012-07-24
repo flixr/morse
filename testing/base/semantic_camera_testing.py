@@ -41,6 +41,7 @@ class Semantic_Camera_Test(MorseTestCase):
         #env = Environment('indoors-1/indoor-1')
         env = Environment('indoors-1/boxes')
         env.configure_service('socket')
+        env.create()
 
 
     def test_semantic_camera(self):
@@ -49,9 +50,9 @@ class Semantic_Camera_Test(MorseTestCase):
         """
         with Morse() as morse:
             # Read the data from the semantic camera
-            semantic_stream = morse.stream('CameraMain')
+            semantic_stream = morse.stream('robot.camera')
 
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             self.v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.v_w_client.connect(('localhost', port))
 

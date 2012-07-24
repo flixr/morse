@@ -45,6 +45,7 @@ class Odometry_Test(MorseTestCase):
         #env = Environment('indoors-1/indoor-1')
         env = Environment('land-1/rosace_1')
         env.configure_service('socket')
+        env.create()
 
     def clear_datas(self, x, y, yaw):
         self.x = x
@@ -84,11 +85,11 @@ class Odometry_Test(MorseTestCase):
 
         with Morse() as morse:
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            self.pose_stream = morse.stream('Pose')
-            self.odo_stream = morse.stream('Odometry')
+            self.pose_stream = morse.stream('robot.pose')
+            self.odo_stream = morse.stream('robot.odo')
 
             # v_w socket
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             self.v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.v_w_client.connect(('localhost', port))
 

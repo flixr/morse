@@ -59,6 +59,7 @@ class YARP_MW_Test(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_vw_controller(self):
         """ This test is guaranteed to be started only when the simulator

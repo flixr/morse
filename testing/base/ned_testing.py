@@ -38,6 +38,7 @@ class NedTest(MorseTestCase):
 
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
 
     def test_ned_pose(self):
@@ -45,8 +46,8 @@ class NedTest(MorseTestCase):
         """
 
         with Morse() as morse:
-            pose_stream = morse.stream('Pose')
-            pose_ned_stream = morse.stream('Pose.001')
+            pose_stream = morse.stream('robot.pose')
+            pose_ned_stream = morse.stream('robot.pose2')
 
             pose = pose_stream.get()
             pose_ned = pose_ned_stream.get()

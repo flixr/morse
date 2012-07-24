@@ -32,6 +32,7 @@ class PoseTest(MorseTestCase):
 
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_base_service_connection(self):
         """ Simply tests if the simulator is reachable by its socket interface.
@@ -44,7 +45,7 @@ class PoseTest(MorseTestCase):
         """ Tests if we can retrieve the list of published data streams.
         """
         morse = Morse()
-        self.assertEquals(set(morse.streams()), set(["Pose"]))
+        self.assertEquals(set(morse.streams()), set(["robot.pose"]))
         morse.close()
 
     def test_read_pose(self):
@@ -52,7 +53,7 @@ class PoseTest(MorseTestCase):
         """
 
         with Morse() as morse:
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
 
             pose = pose_stream.get()
 

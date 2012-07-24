@@ -56,6 +56,7 @@ class RosServicesTest(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('ros')
+        env.create()
 
     def test_unknow_service(self):
         

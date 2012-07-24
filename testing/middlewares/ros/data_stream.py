@@ -59,6 +59,7 @@ class DataStreamTest(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def pose_callback(self, data):
         self.pos = data
