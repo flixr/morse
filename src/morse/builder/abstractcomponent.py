@@ -25,6 +25,18 @@ class Configuration(object):
             self.overlay = {}
             self._init = True
 
+    def _update_name(self, old_name, new_name, dict):
+        try:
+            dict[new_name] = dict.pop(old_name)
+        except KeyError:
+            pass
+
+    def update_name(self, old_name, new_name):
+        self._update_name(old_name, new_name, self.middleware)
+        self._update_name(old_name, new_name, self.modifier)
+        self._update_name(old_name, new_name, self.service)
+        self._update_name(old_name, new_name, self.overlay)
+
     def link_mw(self, component, mw_method_cfg):
         self.middleware.setdefault(component.name, []).append(mw_method_cfg)
 
