@@ -19,7 +19,7 @@ def init_extra_module(self, component_instance, function, mw_data):
     component_name = component_instance.blender_obj.name
     parent_name = component_instance.robot_parent.blender_obj.name
 
-     # Add the new method to the component
+    # Add the new method to the component
     component_instance.output_functions.append(function)
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
@@ -51,11 +51,11 @@ def post_imu_mav(self, component_instance):
     imu.linear_acceleration.y = component_instance.local_data['linear_acceleration'][1]
     imu.linear_acceleration.z = component_instance.local_data['linear_acceleration'][2]
 
-    imu.magnetometer.x = component_instance.local_data['magnetometer'][0]
-    imu.magnetometer.y = component_instance.local_data['magnetometer'][1]
-    imu.magnetometer.z = component_instance.local_data['magnetometer'][2]
+    imu.magnetometer.x = 0.0
+    imu.magnetometer.y = 0.0
+    imu.magnetometer.z = 0.0
 
-    imu.baro_height = component_instance.local_data['baro']
+    imu.baro_height = 0.0
 
 
     for topic in self._topics:
