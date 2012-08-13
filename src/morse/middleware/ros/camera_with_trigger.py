@@ -5,6 +5,9 @@ from sensor_msgs.msg import Image
 from sensor_msgs.msg import CameraInfo
 from uav_msgs.msg import GpioEvent
 
+import math
+import mathutils
+
 def init_extra_module(self, component_instance, function, mw_data):
     """ Setup the middleware connection with this data
 
@@ -26,6 +29,14 @@ def init_extra_module(self, component_instance, function, mw_data):
     
     # add GpioTrigger topic
     self._topics.append(rospy.Publisher("cam_trigger",GpioEvent))
+    
+    (loc, rot, scale) = component_instance.robot_parent.position_3d.transformation3d_with(component_instance.position_3d).matrix.decompose()
+    
+    # in body ned frame
+    logger.debug("camera trans (%.4f, %.4f, %.4f)" % (loc.x, -loc.y, -loc.z))
+    quat = mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(180.0)) * rot
+    logger.debug("camera quat (%.4f, %.4f, %.4f, %.4f)" % tuple(quat))
+    logger.debug("camera euler (%.4f, %.4f, %.4f)" % tuple(math.degrees(a) for a in quat.to_euler()))
 
     logger.info('######## ROS IMAGE PUBLISHER INITIALIZED ########')
 
