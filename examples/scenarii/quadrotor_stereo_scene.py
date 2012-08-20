@@ -7,6 +7,7 @@ bpy.context.scene.game_settings.logic_step_max = 5
 bpy.context.scene.game_settings.physics_step_max = 5
 
 with_stereo = True
+control_attitude = False
 
 # Robots
 Quadrotor = Robot('quadrotor')
@@ -15,13 +16,21 @@ Quadrotor.translate(z=0.3)
 #Quadrotor.rotate(z=math.radians(90))
 Quadrotor.name = 'mav'
 
-# Components
-motion = Actuator('quadrotor_attitude')
-#motion.name = 'motion'
-motion.properties(YawPgain = 10.0)
-motion.properties(YawDgain = 6.0)
-Quadrotor.append(motion)
-motion.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
+if control_attitude:
+    # Components
+    motion = Actuator('quadrotor_attitude')
+    #motion.name = 'motion'
+    motion.properties(YawPgain=10.0)
+    motion.properties(YawDgain=6.0)
+    Quadrotor.append(motion)
+    motion.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
+
+else:
+    waypoint = Actuator('rotorcraft_waypoint')
+    waypoint.properties(YawPgain=10.0)
+    waypoint.properties(YawDgain=6.0)
+    Quadrotor.append(waypoint)
+    waypoint.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_pose', 'morse/middleware/ros/read_pose'])
 
 
 imu = Sensor('imu')
@@ -75,7 +84,7 @@ if (with_stereo):
     CameraR.configure_mw('ros')
 
 
-env = Environment('indoors-1/indoor-1')
+env = Environment('indoors-1/indoor-1_wp_marker')
 env.show_framerate(True)
 #env.show_physics(True)
 
