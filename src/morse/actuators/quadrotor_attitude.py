@@ -47,7 +47,15 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
         # By default it is set to 60, regardless of the FPS
         # If logic tick rate is 60, then: 1 second = 60 ticks
         self.ticks = bge.logic.getLogicTicRate()
-        logger.debug("logic tic rate: %d" % self.ticks)
+        logger.debug("logic tic rate: %d", self.ticks)
+
+        # The actual frequency at which the sensor action is called
+        # When a delay of the sensor is set via frequency,
+        # the action is not called for every logic tick.
+        # frequency of the game sensor specifies how many actions are skipped
+        # e.g. game sensor freq = 0 -> sensor runs at full logic rate
+        self.freq = self.ticks / (self.blender_obj.sensors[0].frequency + 1)
+        logger.debug("frequency: %d", self.freq)
 
         # Make new reference to the robot velocities (mathutils.Vector)
         self.robot_w = self.robot_parent.blender_obj.localAngularVelocity
@@ -78,13 +86,13 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
             else:
                 yaw_rate = 0.0
             # yaw_rate and ya_setpoint in NED
-            self.yaw_setpoint += yaw_rate / self.ticks
+            self.yaw_setpoint += yaw_rate / self.freq
             # wrap angle
             while math.fabs(self.yaw_setpoint) > math.pi:
                 self.yaw_setpoint -= math.copysign(2 * math.pi, self.yaw_setpoint)
 
-            #logger.debug("yaw setpoint: %.3f" % (math.degrees(self.yaw_setpoint)))
-            #logger.debug("yaw current: %.3f   setpoint: %.3f" % (-math.degrees(self.position_3d.yaw), math.degrees(self.yaw_setpoint)))
+            logger.debug("yaw setpoint: %.3f", math.degrees(self.yaw_setpoint))
+            logger.debug("yaw current: %.3f   setpoint: %.3f", -math.degrees(self.position_3d.yaw), math.degrees(self.yaw_setpoint))
 
             # Compute errors
             #
@@ -100,12 +108,12 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
             while math.fabs(yaw_err) > math.pi:
                 yaw_err -= math.copysign(2 * math.pi, yaw_err)
             err = mathutils.Vector((roll_err, pitch_err, yaw_err))
-            #logger.debug("attitude error: (%.3f %.3f %.3f)" % (math.degrees(err[0]), math.degrees(err[1]), math.degrees(err[2])))
+            logger.debug("attitude error: (%.3f %.3f %.3f)", math.degrees(err[0]), math.degrees(err[1]), math.degrees(err[2]))
 
             # derivative
-            we = (err - self.prev_err) * self.ticks
+            we = (err - self.prev_err) * self.freq
             #we = mathutils.Vector((0.0, 0.0, 0.0))
-            #logger.debug("yaw rate error: %.3f" % (we[2]))
+            logger.debug("yaw rate error: %.3f", we[2])
 
             kp = mathutils.Vector((self._rp_pgain, self._rp_pgain, self._yaw_pgain))
             kd = mathutils.Vector((self._rp_dgain, self._rp_pgain, self._yaw_dgain))
@@ -116,10 +124,10 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
                 t.append(self.inertia[i] * (kp[i] * err[i] + kd[i] * we[i]))
             # convert to blender frame and scale with thrust
             torque = mathutils.Vector((t[0], -t[1], -t[2])) * self.local_data['thrust']
-            #logger.debug("applied torques: (%.3f %.3f %.3f)" % (torque[0], torque[1], torque[2]))
+            #logger.debug("applied torques: (%.3f %.3f %.3f)", torque[0], torque[1], torque[2])
 
             force = mathutils.Vector((0.0, 0.0, self.local_data['thrust'] / self._thrust_factor))
-            #logger.debug("applied thrust force: %.3f" % (force[2]))
+            #logger.debug("applied thrust force: %.3f", force[2])
 
             self.prev_err = err.copy()
         else:
