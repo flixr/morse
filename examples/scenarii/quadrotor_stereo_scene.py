@@ -46,7 +46,7 @@ imu.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.R
 pose = Sensor('pose')
 pose.frequency(30)
 Quadrotor.append(pose)
-pose.configure_mw('morse.middleware.ros_mw.rosclass', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf', 'morse/middleware/ros/pose'])
+pose.configure_mw('morse.middleware.ros_mw.rosclass', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf', 'morse/middleware/ros/pose', {'frame_id': '/world', 'child_frame_id': '/mav'}])
 
 if (with_stereo):
     # The STEREO UNIT, where the two cameras will be fixed
