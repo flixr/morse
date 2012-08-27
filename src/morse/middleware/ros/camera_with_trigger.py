@@ -19,6 +19,8 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     # Add the new method to the component
     component_instance.output_functions.append(function)
+    
+    logger.setLevel(logging.DEBUG)
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
     self._topics.append(rospy.Publisher(parent_name + "/" + component_name + "/image", Image))
@@ -35,7 +37,8 @@ def init_extra_module(self, component_instance, function, mw_data):
     # in body ned frame
     logger.debug("camera trans (%.4f, %.4f, %.4f)" % (loc.x, -loc.y, -loc.z))
     quat = mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(180.0)) * rot
-    logger.debug("camera quat (%.4f, %.4f, %.4f, %.4f)" % tuple(quat))
+    quat.conjugate()
+    logger.debug("rotate vector from body to cam frame: quaternion [xyzw] (%.4f, %.4f, %.4f, %.4f)", quat.x, quat.y, quat.z, quat.w)
     logger.debug("camera euler (%.4f, %.4f, %.4f)" % tuple(math.degrees(a) for a in quat.to_euler()))
 
     logger.info('######## ROS IMAGE PUBLISHER INITIALIZED ########')
@@ -98,13 +101,13 @@ def post_image_and_trigger(self, component_instance):
     camera_info.height = image.height
     camera_info.width = image.width
     camera_info.distortion_model = 'plumb_bob'
-    camera_info.K = [intrinsic[0][0], intrinsic[1][0], intrinsic[2][0],
-                     intrinsic[0][1], intrinsic[1][1], intrinsic[2][1],
-                     intrinsic[0][2], intrinsic[1][2], intrinsic[2][2]]
+    camera_info.K = [intrinsic[0][0], intrinsic[0][1], intrinsic[0][2],
+                     intrinsic[1][0], intrinsic[1][1], intrinsic[1][2],
+                     intrinsic[2][0], intrinsic[2][1], intrinsic[2][2]]
     camera_info.R = R
-    camera_info.P = [intrinsic[0][0], intrinsic[1][0], intrinsic[2][0], Tx,
-                     intrinsic[0][1], intrinsic[1][1], intrinsic[2][1], Ty,
-                     intrinsic[0][2], intrinsic[1][2], intrinsic[2][2], 0]
+    camera_info.P = [intrinsic[0][0], intrinsic[0][1], intrinsic[0][2], Tx,
+                     intrinsic[1][0], intrinsic[1][1], intrinsic[1][2], Ty,
+                     intrinsic[2][0], intrinsic[2][1], intrinsic[2][2], 0]
 
     for topic in self._topics:
         # publish the message on the correct topic
