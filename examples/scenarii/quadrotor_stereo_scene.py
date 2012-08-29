@@ -17,33 +17,30 @@ object_noise = False
 
 
 # Robots
-Quadrotor = Robot('quadrotor')
-#Quadrotor.translate(x=-1.2483, y=1.7043, z=1.8106)
-Quadrotor.translate(z=0.3)
-#Quadrotor.rotate(z=math.radians(90))
-Quadrotor.name = 'mav'
+mav = Robot('quadrotor')
+#mav.translate(x=-1.2483, y=1.7043, z=1.8106)
+mav.translate(z=0.3)
+#mav.rotate(z=math.radians(90))
 
 if joystick_control:
     # Components
     motion = Actuator('quadrotor_attitude')
-    #motion.name = 'motion'
     motion.properties(YawPgain=10.0)
     motion.properties(YawDgain=6.0)
-    Quadrotor.append(motion)
+    mav.append(motion)
     motion.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
 
 else:
     waypoint = Actuator('rotorcraft_waypoint')
     waypoint.properties(YawPgain=10.0)
     waypoint.properties(YawDgain=6.0)
-    Quadrotor.append(waypoint)
+    mav.append(waypoint)
     waypoint.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_pose', 'morse/middleware/ros/read_pose'])
 
 
 imu = Sensor('imu')
-imu.name = 'imu'
 imu.rotate(x=math.pi)
-Quadrotor.append(imu)
+mav.append(imu)
 #imu.configure_mw('ros')
 imu.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_imu_mav', 'morse/middleware/ros/imu_mav'])
 if imu_noise:
@@ -51,17 +48,15 @@ if imu_noise:
                                    {'gyro_std': 0.1, 'accel_std': 0.8}])
 
 if with_height:
-    height = Sensor('altitude')
-    height.name = 'height_to_footprint'
-    Quadrotor.append(height)
-    height.properties(AltitudeOffset=0.226)
-    height.frequency(10)
-    height.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
+    height_to_footprint = Sensor('altitude')
+    mav.append(height_to_footprint)
+    height_to_footprint.properties(AltitudeOffset=0.226)
+    height_to_footprint.frequency(10)
+    height_to_footprint.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
 
 if with_object_detector:
     detector = Sensor('object_detector')
-    detector.name = 'detector'
-    Quadrotor.append(detector)
+    mav.append(detector)
     detector.frequency(5)
     detector.properties(Target='PinkBox')
     detector.configure_mw('morse.middleware.ros_mw.rosclass', \
@@ -75,8 +70,7 @@ if with_object_detector:
 if with_pose:
     pose = Sensor('pose')
     pose.frequency(30)
-    pose.name = 'pose'
-    Quadrotor.append(pose)
+    mav.append(pose)
     pose.configure_mw('morse.middleware.ros_mw.rosclass',
                       [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
                        'morse/middleware/ros/pose',
@@ -84,38 +78,36 @@ if with_pose:
 
 if with_stereo:
     # The STEREO UNIT, where the two cameras will be fixed
-    Stereo = Sensor('stereo_unit')
-    Stereo.translate(z= -0.03)
-    Stereo.rotate(y=math.radians(35))
-    Quadrotor.append(Stereo)
+    stereo = Sensor('stereo_unit')
+    stereo.translate(z= -0.03)
+    stereo.rotate(y=math.radians(35))
+    mav.append(stereo)
 
     # Left camera
-    CameraL = Sensor('video_camera')
-    CameraL.name = 'stereo/left'
-    CameraL.translate(x=0.1, y=0.05, z= -0.02)
-    Stereo.append(CameraL)
-    CameraL.properties(capturing=True)
-    CameraL.properties(cam_width=376)
-    CameraL.properties(cam_height=240)
-    CameraL.properties(cam_focal=23)
-    CameraL.properties(Vertical_Flip=True)
-    CameraL.properties(cam_near=0.01)
-    CameraL.frequency(5)
-    CameraL.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
+    left = Sensor('video_camera')
+    left.translate(x=0.1, y=0.05, z= -0.02)
+    stereo.append(left)
+    left.properties(capturing=True)
+    left.properties(cam_width=376)
+    left.properties(cam_height=240)
+    left.properties(cam_focal=23)
+    left.properties(Vertical_Flip=True)
+    left.properties(cam_near=0.01)
+    left.frequency(5)
+    left.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
 
     # Right camera
-    CameraR = Sensor('video_camera')
-    CameraR.name = 'stereo/right'
-    CameraR.translate(x=0.1, y= -0.05, z= -0.02)
-    Stereo.append(CameraR)
-    CameraR.properties(capturing=True)
-    CameraR.properties(cam_width=376)
-    CameraR.properties(cam_height=240)
-    CameraR.properties(cam_focal=23)
-    CameraR.properties(Vertical_Flip=True)
-    CameraR.properties(cam_near=0.01)
-    CameraR.frequency(5)
-    CameraR.configure_mw('ros')
+    right = Sensor('video_camera')
+    right.translate(x=0.1, y= -0.05, z= -0.02)
+    stereo.append(right)
+    right.properties(capturing=True)
+    right.properties(cam_width=376)
+    right.properties(cam_height=240)
+    right.properties(cam_focal=23)
+    right.properties(Vertical_Flip=True)
+    right.properties(cam_near=0.01)
+    right.frequency(5)
+    right.configure_mw('ros')
 
 #env = Environment('indoors-1/boxes_dotted')
 env = Environment('indoors-1/indoor-1_wp_marker')
