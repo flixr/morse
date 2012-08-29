@@ -59,6 +59,7 @@ class DataStreamTest(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def pose_callback(self, data):
         self.pos = data
@@ -69,12 +70,12 @@ class DataStreamTest(MorseTestCase):
         # tf, and don't want to add too much dependency for test
 
         rospy.init_node('morse_ros_data_stream_test')
-        rospy.Subscriber('ATRV/Pose', Odometry, self.pose_callback)
+        rospy.Subscriber('/robot/pose', Odometry, self.pose_callback)
 
-        msg = rospy.client.wait_for_message('ATRV/Pose', Odometry, timeout = 10)
+        msg = rospy.client.wait_for_message('robot/pose', Odometry, timeout = 10)
         self.assertTrue(msg != None)
 
-        cmd_stream = rospy.Publisher('ATRV/Motion_Controller', Twist)
+        cmd_stream = rospy.Publisher('robot/motion', Twist)
        
         self.assertTrue(hasattr(self, "pos"))
         precision=0.15

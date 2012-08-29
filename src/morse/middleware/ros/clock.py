@@ -9,9 +9,6 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     Prepare the middleware to handle the serialised data as necessary.
     """
-    # Compose the name of the port, based on the parent and module names
-    component_name = component_instance.blender_obj.name
-
     # Add the new method to the component
     component_instance.output_functions.append(function)
 
@@ -33,6 +30,6 @@ def post_clock(self, component_instance):
 
     for topic in self._topics:
         # publish the message on the correct topic
-        if str(topic.name) == str("/" + component_instance.blender_obj.name):
+        if str(topic.name) == self.topic_name(component_instance):
             topic.publish(msg)
 

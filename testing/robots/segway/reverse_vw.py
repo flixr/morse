@@ -25,9 +25,9 @@ def send_speed(s, v, w, t):
     sleep(1)
 
 def send_service_speed(s, v, w, t):
-    s.call_server('Motion_Controller', 'set_speed', v, w)
+    s.call_server('robot.motion', 'set_speed', v, w)
     sleep(t)
-    s.call_server('Motion_Controller', 'stop')
+    s.call_server('robot.motion', 'stop')
     sleep(1)
 
 class Differential_VW_Test(MorseTestCase):
@@ -51,12 +51,13 @@ class Differential_VW_Test(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_vw_controller(self):
         with Morse() as morse:
         
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for key,coord in pose.items():
                 if key == 'z':
@@ -65,7 +66,7 @@ class Differential_VW_Test(MorseTestCase):
                     self.assertAlmostEqual(coord, 0.0, delta=0.03)
 
             # v_w socket
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             v_w_client.connect(('localhost', port))
 
@@ -146,7 +147,7 @@ class Differential_VW_Test(MorseTestCase):
         with Morse() as morse:
         
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for key,coord in pose.items():
                 if key == 'z':

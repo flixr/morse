@@ -29,6 +29,38 @@ class ROSClass(morse.core.middleware.MorseMiddlewareClass):
         rospy.signal_shutdown("ROSPy Shutdown")
         logger.info('ROS Mid: Morse Rosnode has been killed.')
 
+    def topic_name(self, component_instance):
+        """  Generate the topic name """
+
+        parent_name = component_instance.robot_parent.blender_obj.name
+        component_name = component_instance.blender_obj.name
+
+        # Check if the component_name is a full qualified name or not
+        # For that, check the number of . in its name. If it is more
+        # than 2, we are sure it is a qualified name. If it is 0, it is
+        # definitevely not one. If it is 1, check that the end is not a
+        # string of kind 0XY.
+
+        fqn = False
+        s = component_name.split(".")
+        size = len(s)
+        if size > 3:
+            fqn = True
+        elif size == 2:
+            last = s[-1]
+            try:
+                v = int(last)
+            except ValueError:
+                fqn = True
+
+        if fqn:
+            port_name = component_name.replace('.', '/')
+        else:
+            port_name = parent_name + "/" + component_name
+
+        return port_name
+
+
     def register_component(self, component_name, component_instance, mw_data):
         """ Generate a new topic to publish the data
 
@@ -58,13 +90,13 @@ class ROSClass(morse.core.middleware.MorseMiddlewareClass):
             if function_name == "post_message":
                 component_instance.output_functions.append(function)
                 # Generate one publisher and one topic for each component that is a sensor and uses post_message 
-                self._topics.append(rospy.Publisher(parent_name + "/" + component_name, String))
+                self._topics.append(rospy.Publisher(self.topic_name(component_instance), String))
 
             # Read Strings from a rostopic    
             elif function_name == "read_message":
                 component_instance.input_functions.append(function)
                 func = getattr(self, "callback")
-                self._topics.append(rospy.Subscriber(parent_name + "/" + component_name, String, func, component_instance))
+                self._topics.append(rospy.Subscriber(self.topic_name(component_instance), String, func, component_instance))
 
             else:
                 #Add external module 

@@ -37,6 +37,7 @@ class Waypoints_Test(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_waypoint_controller(self):
         """ This test is guaranteed to be started only when the simulator
@@ -45,13 +46,13 @@ class Waypoints_Test(MorseTestCase):
         with Morse() as morse:
         
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for coord in pose.values():
                 self.assertAlmostEqual(coord, 0.0, delta=0.02)
 
             # waypoint controller socket
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             v_w_client.connect(('localhost', port))
 
@@ -78,12 +79,12 @@ class Waypoints_Test(MorseTestCase):
     def test_waypoint_service_controller(self):
         with Morse() as morse:
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for coord in pose.values():
                 self.assertAlmostEqual(coord, 0.0, delta=0.02)
 
-            morse.call_server('Motion_Controller', 'goto', 10.0, 5.0, 0.0, 0.5, 1.0)
+            morse.call_server('robot.motion', 'goto', 10.0, 5.0, 0.0, 0.5, 1.0)
 
             pose = pose_stream.get()
             self.assertAlmostEqual(pose['x'], 10.0, delta=0.5)

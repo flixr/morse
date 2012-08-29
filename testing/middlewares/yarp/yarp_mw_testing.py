@@ -59,6 +59,7 @@ class YARP_MW_Test(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_vw_controller(self):
         """ This test is guaranteed to be started only when the simulator
@@ -70,11 +71,11 @@ class YARP_MW_Test(MorseTestCase):
 
         pose_stream = yarp.BufferedPortBottle()
         pose_stream.open("/morse/test/pose/in")
-        yarp.Network.connect("/morse/robots/ATRV/Pose/out", "/morse/test/pose/in")
+        yarp.Network.connect("/morse/robots/robot/pose/out", "/morse/test/pose/in")
 
         cmd_stream = yarp.BufferedPortBottle()
         cmd_stream.open("/morse/test/vw/out")
-        yarp.Network.connect("/morse/test/vw/out", "/morse/robots/ATRV/Motion_Controller/in")
+        yarp.Network.connect("/morse/test/vw/out", "/morse/robots/robot/motion/in")
         
         # Read the start position, it must be (0.0, 0.0, 0.0)
         pose = pose_stream.read()
