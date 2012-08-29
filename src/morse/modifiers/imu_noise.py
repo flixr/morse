@@ -6,8 +6,8 @@ from morse.core.modifier import MorseModifierClass
 
 class MorseIMUNoiseClass(MorseModifierClass):
 
-    gyro_std_dev = 0
-    accel_std_dev = 0
+    _gyro_std_dev = 0.05
+    _accel_std_dev = 0.5
 
     def register_component(self, component_name, component_instance, mod_data):
         """ Add the corresponding function to a component. """
@@ -27,18 +27,21 @@ class MorseIMUNoiseClass(MorseModifierClass):
         else:
             logger.warning("Unknown function name for IMU Noise modifier. Check component_config.py file.")
 
-        # Extract the Modifier parameters
-        # First one is the gyroscope standard deviation
-        # Second one is the accelerometer standard deviation
+        # Extract the Modifier parameters from the dictionary
         try:
-            self.gyro_std_dev = mod_data[2]
-            self.accel_std_dev = mod_data[3]
+            self._gyro_std_dev = mod_data[2].get("gyro_std", 0.05)
+            self._accel_std_dev = mod_data[2].get("accel_std", 0.5)
         except:
             pass
+
+        logger.info("Adding noise to IMU with standard deviations: gyro %.4f, accel %.4f", \
+                    self._gyro_std_dev, self._accel_std_dev)
 
 
     def noisify(self, component_instance):
         for i in range(0, 3):
-            component_instance.local_data['angular_velocity'][i] = morse.modifiers.gaussian.gaussian(self.gyro_std_dev, component_instance.local_data['angular_velocity'][i])
-            component_instance.local_data['linear_acceleration'][i] = morse.modifiers.gaussian.gaussian(self.accel_std_dev, component_instance.local_data['linear_acceleration'][i])
+            component_instance.local_data['angular_velocity'][i] = \
+                morse.modifiers.gaussian.gaussian(self._gyro_std_dev, component_instance.local_data['angular_velocity'][i])
+            component_instance.local_data['linear_acceleration'][i] = \
+                morse.modifiers.gaussian.gaussian(self._accel_std_dev, component_instance.local_data['linear_acceleration'][i])
 
