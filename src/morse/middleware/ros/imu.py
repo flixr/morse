@@ -6,8 +6,6 @@ import rospy
 import std_msgs
 from sensor_msgs.msg import Imu
 
-import copy
-import bge
 import mathutils
 import math
 
@@ -16,16 +14,12 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     Prepare the middleware to handle the serialised data as necessary.
     """
-    # Compose the name of the port, based on the parent and module names
-    component_name = component_instance.blender_obj.name
-    parent_name = component_instance.robot_parent.blender_obj.name
-
     # Add the new method to the component
     component_instance.output_functions.append(function)
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
     if mw_data[1] == "post_imu":
-        self._topics.append(rospy.Publisher(parent_name + "/" + component_name, Imu))
+        self._topics.append(rospy.Publisher(self.topic_name(component_instance), Imu))
         
     # get the IMU orientation to post in the ROS message
     self.orientation = component_instance.blender_obj.worldOrientation
@@ -38,8 +32,6 @@ def init_extra_module(self, component_instance, function, mw_data):
 def post_imu(self, component_instance):
     """ Publish the data of the IMU sensor as a custom ROS Imu message
     """
-    parent = component_instance.robot_parent
-    parent_name = parent.blender_obj.name
     current_time = rospy.Time.now()
 
     imu = Imu()
@@ -61,7 +53,7 @@ def post_imu(self, component_instance):
 
     for topic in self._topics:
         # publish the message on the correct w
-        if str(topic.name) == str("/" + parent_name + "/" + component_instance.blender_obj.name):
+        if str(topic.name) == self.topic_name(component_instance):
             topic.publish(imu)
 
     self._seq += 1

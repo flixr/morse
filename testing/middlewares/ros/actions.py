@@ -57,6 +57,7 @@ class RosActionsTest(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('ros')
+        env.create()
 
     def test_no_action(self):
             rospy.init_node('move_base_client')
@@ -67,7 +68,7 @@ class RosActionsTest(MorseTestCase):
             
             rospy.loginfo("Starting ROS test case for actions.")
             rospy.init_node('move_base_client')
-            client = actionlib.SimpleActionClient('Motion_Controller/move_base', MoveBaseAction)
+            client = actionlib.SimpleActionClient('robot/waypoint/move_base', MoveBaseAction)
             self.assertTrue(client.wait_for_server(rospy.Duration(5)))
 
             goal = MoveBaseGoal(Pose(Point(0.1,3.0,0.0), Quaternion(0.0,0.0,0.0,1.0)))

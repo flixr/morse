@@ -24,9 +24,9 @@ def send_speed(s, v, w, t):
     s.send(json.dumps({'v' : 0.0, 'w' : 0.0}).encode())
 
 def send_service_speed(s, v, w, t):
-    s.call_server('Motion_Controller', 'set_speed', v, w)
+    s.call_server('robot.motion', 'set_speed', v, w)
     sleep(t)
-    s.call_server('Motion_Controller', 'stop')
+    s.call_server('robot.motion', 'stop')
 
 class VW_Test(MorseTestCase):
     def setUpEnv(self):
@@ -46,6 +46,7 @@ class VW_Test(MorseTestCase):
         
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_vw_controller(self):
         with Morse() as morse:
@@ -53,13 +54,13 @@ class VW_Test(MorseTestCase):
             precision=0.05
         
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for coord in pose.values():
                 self.assertAlmostEqual(coord, 0.0, delta=precision)
 
             # v_w socket
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             v_w_client.connect(('localhost', port))
 
@@ -110,7 +111,7 @@ class VW_Test(MorseTestCase):
             precision=0.15
         
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            pose_stream = morse.stream('Pose')
+            pose_stream = morse.stream('robot.pose')
             pose = pose_stream.get()
             for coord in pose.values():
                 self.assertAlmostEqual(coord, 0.0, delta=precision)

@@ -42,7 +42,7 @@ class Sick_Test(MorseTestCase):
         #env = Environment('indoors-1/indoor-1')
         env = Environment('indoors-1/boxes')
         env.configure_service('socket')
-
+        env.create()
 
     def test_sick(self):
         """ This test is guaranteed to be started only when the simulator
@@ -51,9 +51,9 @@ class Sick_Test(MorseTestCase):
         with Morse() as morse:
         
             # Read the data from the sick sensor
-            self.sick_stream = morse.stream('Sick')
+            self.sick_stream = morse.stream('robot.sick')
 
-            port = morse.get_stream_port('Motion_Controller')
+            port = morse.get_stream_port('robot.motion')
             self.v_w_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.v_w_client.connect(('localhost', port))
 

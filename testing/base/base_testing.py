@@ -21,9 +21,13 @@ class BaseTest(MorseTestCase):
         
         # Adding 2 robots
         robot1 = Robot('jido')        
+        robot1.name = 'Jido' 
         robot2 = Robot('atrv')
+        robot2.name = 'Dala' 
+        robot3 = Robot('atrv')
         
         env = Environment('indoors-1/indoor-1')
+        env.create()
 
     def test_list_robots(self):
         """ Tests the simulator can return the list of robots
@@ -47,7 +51,7 @@ class BaseTest(MorseTestCase):
         
         import ast
         robotsset = set(ast.literal_eval(robots))
-        self.assertEquals(robotsset, {'Jido', 'ATRV'})
+        self.assertEquals(robotsset, {'Jido', 'Dala', 'robot3'})
         sockf.close()
         s.close()
 

@@ -8,15 +8,11 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     Prepare the middleware to handle the serialised data as necessary.
     """
-    # Compose the name of the port, based on the parent and module names
-    component_name = component_instance.blender_obj.name
-    parent_name = component_instance.robot_parent.blender_obj.name
-    
     # Add the new method to the component
     component_instance.input_functions.append(function)
 
     # Generate one subscriber and one topic for each component that is a sensor and uses post_message
-    self._topics.append(rospy.Subscriber(parent_name + "/" + component_name, Bool, callback_wp, component_instance))
+    self._topics.append(rospy.Subscriber(self.topic_name(component_instance), Bool, callback_wp, component_instance))
 
     logger.info('ROS subscriber initialized')
 

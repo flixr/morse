@@ -1,6 +1,7 @@
 import logging; logger = logging.getLogger("morsebuilder." + __name__)
 import bpy
 import json
+import copy
 
 from morse.builder.data import *
 
@@ -23,6 +24,18 @@ class Configuration(object):
             self.service = {}
             self.overlay = {}
             self._init = True
+
+    def _update_name(self, old_name, new_name, dict):
+        try:
+            dict[new_name] = dict.pop(old_name)
+        except KeyError:
+            pass
+
+    def update_name(self, old_name, new_name):
+        self._update_name(old_name, new_name, self.middleware)
+        self._update_name(old_name, new_name, self.modifier)
+        self._update_name(old_name, new_name, self.service)
+        self._update_name(old_name, new_name, self.overlay)
 
     def link_mw(self, component, mw_method_cfg):
         self.middleware.setdefault(component.name, []).append(mw_method_cfg)
@@ -61,18 +74,39 @@ class AbstractComponent(object):
     def __init__(self, obj=None, name=None):
         self._blendobj = obj
         self._blendname = name # for mw config
+        self.basename = None
+        self.children = []
+
     def append(self, obj):
         """ Add a child to the current object,
 
         eg: robot.append(sensor), will set the robot parent of the sensor.
         """
         obj._blendobj.parent = self._blendobj
+        obj.parent = self
+        self.children.append(obj)
+
+        #TODO: replace by sys._getframes() ??
+        import inspect
+        frame = inspect.currentframe()
+        builderscript_frame = inspect.getouterframes(frame)[1][0] # parent frame
+        cmpts = builderscript_frame.f_locals
+        if "self" in  cmpts: #some silly guy decided to write a class to describe a silly robot
+            tmp = copy.copy(cmpts["self"].__dict__)
+            tmp.update(cmpts)
+            cmpts = tmp
+
+        for name, component in cmpts.items():
+            if component == obj:
+                if not component.basename: # do automatic renaming only if a name is not already manually set
+                    component.basename = name
 
     @property
     def name(self):
         return self._blendobj.name
     @name.setter
     def name(self, value):
+        self.basename = value
         self._blendobj.name = value
     @property
     def location(self):

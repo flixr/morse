@@ -11,12 +11,9 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     Prepare the middleware to handle the serialised data as necessary.
     """
-    component_name = component_instance.blender_obj.name
-    parent_name = component_instance.robot_parent.blender_obj.name
-
     # Add the new method to the component
     component_instance.input_functions.append(function)
-    self._topics.append(rospy.Subscriber(parent_name + "/" + component_name, Quaternion, callback_quaternion, component_instance))
+    self._topics.append(rospy.Subscriber(self.topic_name(component_instance), Quaternion, callback_quaternion, component_instance))
 
 def callback_quaternion(data, component_instance):
     """ this function is called as soon as Quaternion messages are published on the specific topic """

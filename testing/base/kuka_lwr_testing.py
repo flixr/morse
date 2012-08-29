@@ -37,6 +37,7 @@ class KUKA_LWR_Test(MorseTestCase):
 
         env = Environment('indoors-1/indoor-1')
         env.configure_service('socket')
+        env.create()
 
     def test_kuka_controller(self):
         """ This test is guaranteed to be started only when the simulator
@@ -44,8 +45,9 @@ class KUKA_LWR_Test(MorseTestCase):
         """
         with Morse() as morse:
             # Read the armature position
-            posture_stream = morse.stream('kuka_posture')
+            posture_stream = morse.stream('robot.kuka_posture')
             posture = posture_stream.get()
+            print(posture)
             # Test each of the fields individually
             self.assertAlmostEqual(posture['x'], 0.0, delta=0.02)
             self.assertAlmostEqual(posture['y'], 0.0, delta=0.02)
@@ -63,7 +65,7 @@ class KUKA_LWR_Test(MorseTestCase):
 
 
             # kuka controller socket
-            port = morse.get_stream_port('kuka_armature')
+            port = morse.get_stream_port('robot.kuka_lwr')
             kuka_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             kuka_client.connect(('localhost', port))
 
@@ -92,7 +94,7 @@ class KUKA_LWR_Test(MorseTestCase):
         with Morse() as morse:
 
             # Read the start position, it must be (0.0, 0.0, 0.0)
-            posture_stream = morse.stream('kuka_posture')
+            posture_stream = morse.stream('robot.kuka_posture')
             posture = posture_stream.get()
             self.assertAlmostEqual(posture['kuka_1'], 0.0, delta=0.02)
             self.assertAlmostEqual(posture['kuka_2'], 0.0, delta=0.02)
@@ -102,7 +104,7 @@ class KUKA_LWR_Test(MorseTestCase):
             self.assertAlmostEqual(posture['kuka_6'], 0.0, delta=0.02)
             self.assertAlmostEqual(posture['kuka_7'], 0.0, delta=0.02)
 
-            morse.call_server('kuka_armature', 'set_rotation_array', 1.57, 2.0, 1.0, -2.28, 1.0, -2.0, 1.0)
+            morse.call_server('robot.kuka_lwr', 'set_rotation_array', 1.57, 2.0, 1.0, -2.28, 1.0, -2.0, 1.0)
             sleep(2)
 
             posture = posture_stream.get()

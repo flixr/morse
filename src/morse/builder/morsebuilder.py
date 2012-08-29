@@ -471,6 +471,10 @@ class Environment(Component):
         self._multinode_configured = False
         self._display_camera = None
 
+        # Rename the components according to their variable names
+        self._rename_components()
+
+
         # define 'Scene_Script_Holder' as the blender object of Enrivonment
         if not 'Scene_Script_Holder' in bpy.data.objects:
             # Add the necessary objects
@@ -522,6 +526,39 @@ class Environment(Component):
         cfg.write('node_config = ' + json.dumps(node_config, indent=1) )
         cfg.write('\n')
 
+    def _rename_components(self):
+        """ Rename Blender objects after the variable name used
+        in the Builder script.
+
+        If a name is already set (with 'obj.name=...'), does nothing.
+        """
+
+        import inspect
+        frame = inspect.currentframe()
+        builderscript_frame = inspect.getouterframes(frame)[2][0] # parent frame
+
+        for name, component in builderscript_frame.f_locals.items():
+            if isinstance(component, AbstractComponent):
+
+                if hasattr(component, "parent"):
+                    continue
+
+                if not component.basename: # do automatic renaming only if a name is not already manually set
+                    component.basename = name
+
+                def renametree(cmpt, fqn):
+                    fqn.append(cmpt.basename)
+                    new_name = '.'.join(fqn)
+                    Configuration().update_name(cmpt.name, new_name)
+                    cmpt._blendobj.name = '.'.join(fqn)
+                    for child in cmpt.children:
+                        renametree(child, fqn[:])
+
+                renametree(component, [])
+
+
+
+
     def place_camera(self, location):
         """ Store the position that will be givent to the default camera
         Expected argument is a list with the desired position for the camera
@@ -543,6 +580,7 @@ class Environment(Component):
                 name = os.environ["MORSE_NODE"]
             except KeyError:
                 name = os.uname()[1]
+
         # Write the configuration of the middlewares, and node configuration
         Configuration().write_config()
         self._write_multinode(name)
