@@ -11,8 +11,9 @@ with_stereo = True
 with_pose = True
 with_height = True
 joystick_control = False
-imu_noise = False
+imu_noise = True
 with_object_detector = True
+object_noise = False
 
 
 # Robots
@@ -46,7 +47,8 @@ Quadrotor.append(imu)
 #imu.configure_mw('ros')
 imu.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_imu_mav', 'morse/middleware/ros/imu_mav'])
 if imu_noise:
-    imu.configure_modifier('foobar', ['morse.modifiers.imu_noise.MorseIMUNoiseClass', 'noisify', {'gyro_std': 0.1, 'accel_std': 0.8}])
+    imu.configure_modifier('foo', ['morse.modifiers.imu_noise.MorseIMUNoiseClass', 'noisify',
+                                   {'gyro_std': 0.1, 'accel_std': 0.8}])
 
 if with_height:
     height = Sensor('altitude')
@@ -66,14 +68,18 @@ if with_object_detector:
                           [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose', \
                            'morse/middleware/ros/pose', \
                            {'frame_id': '/detector'}])
+    if object_noise:
+        detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
+                                            'noisify', {'pos_std': 0.1, 'rot_std': math.radians(10)}])
 
 if with_pose:
     pose = Sensor('pose')
     pose.frequency(30)
+    pose.name = 'pose'
     Quadrotor.append(pose)
-    pose.configure_mw('morse.middleware.ros_mw.rosclass', \
-                      [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf', \
-                       'morse/middleware/ros/pose', \
+    pose.configure_mw('morse.middleware.ros_mw.rosclass',
+                      [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
+                       'morse/middleware/ros/pose',
                        {'frame_id': '/world', 'child_frame_id': '/mav'}])
 
 if with_stereo:
