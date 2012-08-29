@@ -38,13 +38,13 @@ class ROSClass(morse.core.middleware.MorseMiddlewareClass):
         # Check if the component_name is a full qualified name or not
         # For that, check the number of . in its name. If it is more
         # than 2, we are sure it is a qualified name. If it is 0, it is
-        # definitevely not one. If it is 1, check that the end is not a
+        # definitively not one. If it is 1, check that the end is not a
         # string of kind 0XY.
 
         fqn = False
         s = component_name.split(".")
         size = len(s)
-        if size > 3:
+        if size > 2:
             fqn = True
         elif size == 2:
             last = s[-1]
