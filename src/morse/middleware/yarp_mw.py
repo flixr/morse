@@ -47,7 +47,7 @@ class MorseYarpClass(morse.core.middleware.MorseMiddlewareClass):
         fqn = False
         s = component_name.split(".")
         size = len(s)
-        if size > 3:
+        if size > 2:
             fqn = True
         elif size == 2:
             last = s[-1]
