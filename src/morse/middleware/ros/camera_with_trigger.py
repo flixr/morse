@@ -13,21 +13,17 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     Prepare the middleware to handle the serialised data as necessary.
     """
-    # Compose the name of the port, based on the parent and module names
-    component_name = component_instance.blender_obj.name
-    parent_name = component_instance.robot_parent.blender_obj.name
-
     # Add the new method to the component
     component_instance.output_functions.append(function)
-    
+
     logger.setLevel(logging.DEBUG)
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
-    self._topics.append(rospy.Publisher(parent_name + "/" + component_name + "/image", Image))
+    self._topics.append(rospy.Publisher(self.topic_name(component_instance) + "/image", Image))
     self._seq = 0
 
     # Add camera_info topic
-    self._topics.append(rospy.Publisher(parent_name + "/" + component_name + "/camera_info", CameraInfo))
+    self._topics.append(rospy.Publisher(self.topic_name(component_instance) + "/camera_info", CameraInfo))
 
     # add GpioTrigger topic
     self._topics.append(rospy.Publisher("cam_trigger", GpioEvent))
@@ -52,7 +48,6 @@ def post_image_and_trigger(self, component_instance):
         return # press [Space] key to enable capturing
 
     parent_name = component_instance.robot_parent.blender_obj.name
-    component_name = component_instance.blender_obj.name
 
     trigger = GpioEvent()
     trigger.stamp = rospy.Time.now()
@@ -83,7 +78,7 @@ def post_image_and_trigger(self, component_instance):
 
     for topic in self._topics:
         # publish the message on the correct topic
-        if str(topic.name) == str("/" + parent_name + "/" + component_name + "/image"):
+        if str(topic.name) == str(self.topic_name(component_instance) + "/image"):
             topic.publish(image)
 
     # sensor_msgs/CameraInfo [ http://ros.org/wiki/rviz/DisplayTypes/Camera ]
@@ -111,7 +106,7 @@ def post_image_and_trigger(self, component_instance):
 
     for topic in self._topics:
         # publish the message on the correct topic
-        if str(topic.name) == str("/" + parent_name + "/" + component_name + "/camera_info"):
+        if str(topic.name) == str(self.topic_name(component_instance) + "/camera_info"):
             topic.publish(camera_info)
 
     self._seq = self._seq + 1
