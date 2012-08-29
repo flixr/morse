@@ -44,27 +44,37 @@ def init_extra_module(self, component_instance, function, mw_data):
 
 
 def post_tf(self, component_instance):
-    euler = mathutils.Euler((component_instance.local_data['roll'],
-                             component_instance.local_data['pitch'],
-                             component_instance.local_data['yaw']))
-    quaternion = euler.to_quaternion()
 
-    t = TransformStamped()
-    t.header.frame_id = self._frame_id
-    t.header.stamp = rospy.Time.now()
-    t.child_frame_id = self._child_frame_id
-    t.transform.translation.x = component_instance.local_data['x']
-    t.transform.translation.y = component_instance.local_data['y']
-    t.transform.translation.z = component_instance.local_data['z']
+    try:
+        publish = component_instance.local_data['valid']
+    except:
+        publish = True
 
-    t.transform.rotation = quaternion
+    if publish:
+        try:
+            quaternion = component_instance.local_data['quat']
+        except:
+            euler = mathutils.Euler((component_instance.local_data['roll'],
+                                     component_instance.local_data['pitch'],
+                                     component_instance.local_data['yaw']))
+            quaternion = euler.to_quaternion()
 
-    tfm = tfMessage([t])
+        t = TransformStamped()
+        t.header.stamp = rospy.Time.now()
+        t.header.frame_id = self._frame_id
+        t.child_frame_id = self._child_frame_id
+        t.transform.translation.x = component_instance.local_data['x']
+        t.transform.translation.y = component_instance.local_data['y']
+        t.transform.translation.z = component_instance.local_data['z']
 
-    for topic in self._topics:
-        # publish the message on the correct topic    
-        if str(topic.name) == str("/tf"):
-            topic.publish(tfm)
+        t.transform.rotation = quaternion
+
+        tfm = tfMessage([t])
+
+        for topic in self._topics:
+            # publish the message on the correct topic    
+            if str(topic.name) == str("/tf"):
+                topic.publish(tfm)
 
 
 def post_odometry(self, component_instance):
@@ -72,46 +82,64 @@ def post_odometry(self, component_instance):
     """
     parent_name = component_instance.robot_parent.blender_obj.name
 
-    odometry = Odometry()
-    odometry.header.stamp = rospy.Time.now()
-    odometry.header.frame_id = self._frame_id
-    odometry.child_frame_id = self._child_frame_id
+    try:
+        publish = component_instance.local_data['valid']
+    except:
+        publish = True
 
-    odometry.pose.pose.position.x = component_instance.local_data['x']
-    odometry.pose.pose.position.y = component_instance.local_data['y']
-    odometry.pose.pose.position.z = component_instance.local_data['z']
+    if publish:
+        try:
+            quaternion = component_instance.local_data['quat']
+        except:
+            euler = mathutils.Euler((component_instance.local_data['roll'],
+                                     component_instance.local_data['pitch'],
+                                     component_instance.local_data['yaw']))
+            quaternion = euler.to_quaternion()
 
-    euler = mathutils.Euler((component_instance.local_data['roll'], component_instance.local_data['pitch'], component_instance.local_data['yaw']))
-    quaternion = euler.to_quaternion()
-    odometry.pose.pose.orientation = quaternion
+        odometry = Odometry()
+        odometry.header.stamp = rospy.Time.now()
+        odometry.header.frame_id = self._frame_id
+        odometry.child_frame_id = self._child_frame_id
 
-    for topic in self._topics:
-        # publish the message on the correct topic    
-        if str(topic.name) == str("/" + parent_name + "/" + component_instance.blender_obj.name):
-            topic.publish(odometry)
+        odometry.pose.pose.position.x = component_instance.local_data['x']
+        odometry.pose.pose.position.y = component_instance.local_data['y']
+        odometry.pose.pose.position.z = component_instance.local_data['z']
+
+        odometry.pose.pose.orientation = quaternion
+
+        for topic in self._topics:
+            # publish the message on the correct topic    
+            if str(topic.name) == str("/" + parent_name + "/" + component_instance.blender_obj.name):
+                topic.publish(odometry)
 
 def post_pose(self, component_instance):
     """ Publish the data of the Pose as a ROS-PoseStamped message
     """
-    parent_name = component_instance.robot_parent.blender_obj.name
-    poseStamped = PoseStamped()
 
-    poseStamped.pose.position.x = component_instance.local_data['x']
-    poseStamped.pose.position.y = component_instance.local_data['y']
-    poseStamped.pose.position.z = component_instance.local_data['z']
-    euler = mathutils.Euler((component_instance.local_data['roll'], component_instance.local_data['pitch'], component_instance.local_data['yaw']))
-    quaternion = euler.to_quaternion()
-    poseStamped.pose.orientation.w = quaternion.w
-    poseStamped.pose.orientation.x = quaternion.x
-    poseStamped.pose.orientation.y = quaternion.y
-    poseStamped.pose.orientation.z = quaternion.z
+    try:
+        publish = component_instance.local_data['valid']
+    except:
+        publish = True
 
-    poseStamped.header.stamp = rospy.Time.now()
+    if publish:
+        parent_name = component_instance.robot_parent.blender_obj.name
+        poseStamped = PoseStamped()
+        poseStamped.header.stamp = rospy.Time.now()
+        poseStamped.header.frame_id = self._frame_id
 
-    # Default baseframe is map  
-    poseStamped.header.frame_id = self._frame_id
+        poseStamped.pose.position.x = component_instance.local_data['x']
+        poseStamped.pose.position.y = component_instance.local_data['y']
+        poseStamped.pose.position.z = component_instance.local_data['z']
 
-    for topic in self._topics:
-        # publish the message on the correct topic    
-        if str(topic.name) == str("/" + parent_name + "/" + component_instance.blender_obj.name):
-            topic.publish(poseStamped)
+        try:
+            quaternion = component_instance.local_data['quat']
+        except:
+            euler = mathutils.Euler((component_instance.local_data['roll'], component_instance.local_data['pitch'], component_instance.local_data['yaw']))
+            quaternion = euler.to_quaternion()
+
+        poseStamped.pose.orientation = quaternion
+
+        for topic in self._topics:
+            # publish the message on the correct topic    
+            if str(topic.name) == str("/" + parent_name + "/" + component_instance.blender_obj.name):
+                topic.publish(poseStamped)
