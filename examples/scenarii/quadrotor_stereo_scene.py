@@ -27,6 +27,7 @@ if joystick_control:
     motion = Actuator('quadrotor_attitude')
     motion.properties(YawPgain=10.0)
     motion.properties(YawDgain=6.0)
+    motion.name = 'attitude'
     mav.append(motion)
     motion.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
 
@@ -48,11 +49,12 @@ if imu_noise:
                                    {'gyro_std': 0.1, 'accel_std': 0.8}])
 
 if with_height:
-    height_to_footprint = Sensor('altitude')
-    mav.append(height_to_footprint)
-    height_to_footprint.properties(AltitudeOffset=0.226)
-    height_to_footprint.frequency(10)
-    height_to_footprint.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
+    height = Sensor('altitude')
+    mav.append(height)
+    height.properties(AltitudeOffset=0.226)
+    height.frequency(10)
+    height.name = 'height_to_footprint'
+    height.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
 
 if with_object_detector:
     detector = Sensor('object_detector')
@@ -84,17 +86,18 @@ if with_stereo:
     mav.append(stereo)
 
     # Left camera
-    left = Sensor('video_camera')
-    left.translate(x=0.1, y=0.05, z= -0.02)
-    stereo.append(left)
-    left.properties(capturing=True)
-    left.properties(cam_width=376)
-    left.properties(cam_height=240)
-    left.properties(cam_focal=23)
-    left.properties(Vertical_Flip=True)
-    left.properties(cam_near=0.01)
-    left.frequency(5)
-    left.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
+    cameraL = Sensor('video_camera')
+    cameraL.translate(x=0.1, y=0.05, z= -0.02)
+    stereo.append(cameraL)
+    cameraL.name = 'left'
+    cameraL.properties(capturing=True)
+    cameraL.properties(cam_width=376)
+    cameraL.properties(cam_height=240)
+    cameraL.properties(cam_focal=23)
+    cameraL.properties(Vertical_Flip=True)
+    cameraL.properties(cam_near=0.01)
+    cameraL.frequency(5)
+    cameraL.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
 
     # Right camera
     right = Sensor('video_camera')
