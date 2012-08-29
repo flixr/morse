@@ -43,20 +43,6 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
         self.add_property('_max_yaw_rate', math.radians(90), 'MaxYawRate')
         self.add_property('_thrust_factor', 0.0255, 'ThrustFactor')
 
-        # Tick rate is the real measure of time in Blender.
-        # By default it is set to 60, regardless of the FPS
-        # If logic tick rate is 60, then: 1 second = 60 ticks
-        self.ticks = bge.logic.getLogicTicRate()
-        logger.debug("logic tic rate: %d", self.ticks)
-
-        # The actual frequency at which the sensor action is called
-        # When a delay of the sensor is set via frequency,
-        # the action is not called for every logic tick.
-        # frequency of the game sensor specifies how many actions are skipped
-        # e.g. game sensor freq = 0 -> sensor runs at full logic rate
-        self.freq = self.ticks / (self.blender_obj.sensors[0].frequency + 1)
-        logger.debug("frequency: %d", self.freq)
-
         # Make new reference to the robot velocities (mathutils.Vector)
         self.robot_w = self.robot_parent.blender_obj.localAngularVelocity
 
@@ -70,7 +56,7 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
 
         self.prev_err = mathutils.Vector((0.0, 0.0, 0.0))
 
-        logger.info('Component initialized')
+        logger.info("Component initialized, runs at %.2f Hz ", self.frequency)
 
 
     def default_action(self):
@@ -82,11 +68,11 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
         if self.local_data['thrust'] > 0:
             # integrate desired yaw rate to angle setpoint
             if math.fabs(yaw_in) > self._yaw_deadband:
-                yaw_rate = self._max_yaw_rate/20.47 * (yaw_in - math.copysign(self._yaw_deadband, yaw_in))
+                yaw_rate = self._max_yaw_rate / 20.47 * (yaw_in - math.copysign(self._yaw_deadband, yaw_in))
             else:
                 yaw_rate = 0.0
             # yaw_rate and ya_setpoint in NED
-            self.yaw_setpoint += yaw_rate / self.freq
+            self.yaw_setpoint += yaw_rate / self.frequency
             # wrap angle
             while math.fabs(self.yaw_setpoint) > math.pi:
                 self.yaw_setpoint -= math.copysign(2 * math.pi, self.yaw_setpoint)
@@ -111,7 +97,7 @@ class QuadrotorAttitudeActuatorClass(morse.core.actuator.MorseActuatorClass):
             logger.debug("attitude error: (%.3f %.3f %.3f)", math.degrees(err[0]), math.degrees(err[1]), math.degrees(err[2]))
 
             # derivative
-            we = (err - self.prev_err) * self.freq
+            we = (err - self.prev_err) * self.frequency
             #we = mathutils.Vector((0.0, 0.0, 0.0))
             logger.debug("yaw rate error: %.3f", we[2])
 

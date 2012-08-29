@@ -25,20 +25,6 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
 
         logger.setLevel(logging.INFO)
 
-        # Tick rate is the real measure of time in Blender.
-        # By default it is set to 60, regardless of the FPS
-        # If logic tick rate is 60, then: 1 second = 60 ticks
-        self.ticks = bge.logic.getLogicTicRate()
-
-        # The actual frequency at which the sensor action is called
-        # When a delay of the sensor is set via frequency,
-        # the action is not called for every logic tick.
-        # frequency of the game sensor specifies how many actions are skipped
-        # e.g. game sensor freq = 0 -> sensor runs at full logic rate
-        self.freq = self.ticks / (self.blender_obj.sensors[0].frequency + 1)
-        logger.info("Running waypoint actutator at %.2f Hz", self.freq)
-
-
         self._destination = self.robot_parent.blender_obj.worldPosition
         self._wp_object = None
 
@@ -96,8 +82,7 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
             self._wp_object = None
             logger.info("Not using a target object")
 
-
-        logger.info('Component initialized')
+        logger.info("Component initialized, runs at %.2f Hz ", self.frequency)
 
 
     @service
@@ -192,8 +177,8 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
         #logger.debug("Robot %s move status: '%s'", robot.blender_obj.name, robot.move_status)
         # Place the target marker where the robot should go
         if self._wp_object:
-            self._wp_object.position = self._destination
-            #self._wp_opject.rotation.yaw = self.local_data['yaw']
+            self._wp_object.worldPosition = self._destination
+            self._wp_object.worldOrientation = mathutils.Matrix.Rotation(self.local_data['yaw'], 3, 'Z')
 
         # current angles to horizontal plane
         roll = self.position_3d.roll
@@ -210,8 +195,9 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
         # zero velocity setpoint for now
         vel_error = -vel_blender
 
-        logger.debug("pos current: (%.3f %.3f %.3f) setpoint: (%.3f %.3f %.3f)", pos_blender[0], pos_blender[1], pos_blender[2],
-                    self._destination[0], self._destination[1], self._destination[2])
+        logger.debug("pos current: (%.3f %.3f %.3f) setpoint: (%.3f %.3f %.3f)", \
+                     pos_blender[0], pos_blender[1], pos_blender[2], \
+                     self._destination[0], self._destination[1], self._destination[2])
         #logger.debug("velocity: (%.3f %.3f %.3f)", vel[0], vel[1], vel[2])
 
         # simple PD controller on horizontal position
@@ -233,9 +219,12 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
         while math.fabs(self.yaw_setpoint) > math.pi:
             self.yaw_setpoint -= math.copysign(2 * math.pi, self.yaw_setpoint)
 
-        logger.debug("roll  current: %.3f   setpoint: %.3f", math.degrees(roll), math.degrees(self.roll_setpoint))
-        logger.debug("pitch current: %.3f   setpoint: %.3f", math.degrees(pitch), math.degrees(self.pitch_setpoint))
-        logger.debug("yaw   current: %.3f   setpoint: %.3f", math.degrees(yaw), math.degrees(self.yaw_setpoint))
+        logger.debug("roll  current: % 2.3f   setpoint: % 2.3f", \
+                     math.degrees(roll), math.degrees(self.roll_setpoint))
+        logger.debug("pitch current: % 2.3f   setpoint: % 2.3f", \
+                     math.degrees(pitch), math.degrees(self.pitch_setpoint))
+        logger.debug("yaw   current: % 2.3f   setpoint: % 2.3f", \
+                     math.degrees(yaw), math.degrees(self.yaw_setpoint))
 
 
         # compute thrust
@@ -257,10 +246,11 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
         while math.fabs(yaw_err) > math.pi:
             yaw_err -= math.copysign(2 * math.pi, yaw_err)
         err = mathutils.Vector((roll_err, pitch_err, yaw_err))
-        logger.debug("attitude error: (%.3f %.3f %.3f)", math.degrees(err[0]), math.degrees(err[1]), math.degrees(err[2]))
+        logger.debug("attitude error: (%.3f %.3f %.3f)", \
+                     math.degrees(err[0]), math.degrees(err[1]), math.degrees(err[2]))
 
         # derivative
-        we = (err - self.prev_err) * self.freq
+        we = (err - self.prev_err) * self.frequency
         #we = mathutils.Vector((0.0, 0.0, 0.0))
         #logger.debug("yaw rate error: %.3f", we[2])
 
@@ -272,7 +262,7 @@ class RotorcraftWaypointActuatorClass(morse.core.actuator.MorseActuatorClass):
         for i in range(3):
             t.append(self.inertia[i] * (kp[i] * err[i] + kd[i] * we[i]))
         # scale with thrust
-        torque = mathutils.Vector((t[0], t[1], t[2])) # * self.thrust / self.nominal_thrust
+        torque = mathutils.Vector((t[0], t[1], t[2])) * self.thrust / self.nominal_thrust
         logger.debug("applied torques: (%.3f %.3f %.3f)", torque[0], torque[1], torque[2])
 
         force = mathutils.Vector((0.0, 0.0, self.thrust))
