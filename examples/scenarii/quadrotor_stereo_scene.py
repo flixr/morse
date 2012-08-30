@@ -13,7 +13,7 @@ with_height = True
 joystick_control = False
 imu_noise = True
 with_object_detector = True
-object_noise = False
+object_noise = True
 
 
 # Robots
@@ -54,20 +54,20 @@ if with_height:
     height.properties(AltitudeOffset=0.226)
     height.frequency(10)
     height.name = 'height_to_footprint'
-    height.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
+    height.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
 
 if with_object_detector:
     detector = Sensor('object_detector')
     mav.append(detector)
     detector.frequency(5)
     detector.properties(Target='PinkBox')
-    detector.configure_mw('morse.middleware.ros_mw.rosclass', \
+    detector.configure_mw('ros', \
                           [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose', \
                            'morse/middleware/ros/pose', \
                            {'frame_id': '/detector'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
-                                            'noisify', {'pos_std': 0.1, 'rot_std': math.radians(10)}])
+                                            'noisify', {'pos_std': 0.01, 'rot_std': math.radians(4)}])
 
 if with_pose:
     pose = Sensor('pose')
