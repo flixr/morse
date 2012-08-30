@@ -16,15 +16,30 @@ def init_extra_module(self, component_instance, function, mw_data):
     """
     # Add the new method to the component
     component_instance.output_functions.append(function)
+    parent_name = component_instance.robot_parent.blender_obj.name
+    component_name = component_instance.blender_obj.name
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
     if mw_data[1] == "post_imu":
         self._topics.append(rospy.Publisher(self.topic_name(component_instance), Imu))
-        
+
     # get the IMU orientation to post in the ROS message
     self.orientation = component_instance.blender_obj.worldOrientation
 
     self._seq = 0
+
+    # Extract the Middleware parameters
+    # additional parameter should be a dict
+    try:
+        frame_id = mw_data[3].get('frame_id', '/' + parent_name + '/imu')
+    except:
+        frame_id = '/' + parent_name + '/imu'
+
+    # create a new dictionary for this sensor if necessary
+    if component_name not in self._properties:
+        self._properties[component_name] = {}
+    # store the frame id in the dict
+    self._properties[component_name]['frame_id'] = frame_id
 
     logger.info('######## Initialized ROS Imu sensor ########')
 
@@ -32,13 +47,14 @@ def init_extra_module(self, component_instance, function, mw_data):
 def post_imu(self, component_instance):
     """ Publish the data of the IMU sensor as a custom ROS Imu message
     """
+    component_name = component_instance.blender_obj.name
     current_time = rospy.Time.now()
 
     imu = Imu()
     imu.header.seq = self._seq
     imu.header.stamp = current_time
-    imu.header.frame_id = "/imu"
-    
+    imu.header.frame_id = self._properties[component_name]['frame_id']
+
     imu.orientation = self.orientation.to_quaternion()
 
     imu.angular_velocity.x = component_instance.local_data['angular_velocity'][0]
