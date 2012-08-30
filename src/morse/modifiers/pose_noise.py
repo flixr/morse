@@ -52,10 +52,14 @@ class MorsePoseNoiseClass(MorseModifierClass):
             rot_vec[i] = morse.modifiers.gaussian.gaussian(self._rot_std_dev, rot_vec[i])
         # convert rotation vector to a quaternion representing the random rotation
         angle = rot_vec.length
-        axis = rot_vec / angle
-        noise_quat = mathutils.Quaternion(axis, angle)
+        if angle > 0:
+            axis = rot_vec / angle
+            noise_quat = mathutils.Quaternion(axis, angle)
+        else:
+            noise_quat = mathutils.Quaternion()
+            noise_quat.identity()
         try:
-            component_instance.local_data['quat'] = (noise_quat * component_instance.local_data['quat']).normalized()
+            component_instance.local_data['orientation'] = (noise_quat * component_instance.local_data['orientation']).normalized()
         except:
             # for eulers this is a bit crude, maybe should use the noise_quat here as well...
             for variable in ['roll', 'pitch', 'yaw']:
