@@ -54,11 +54,11 @@ class ROSClass(morse.core.middleware.MorseMiddlewareClass):
                 fqn = True
 
         if fqn:
-            port_name = component_name.replace('.', '/')
+            topic_name = "/" + component_name.replace('.', '/')
         else:
-            port_name = parent_name + "/" + component_name
+            topic_name = "/" + parent_name + "/" + component_name
 
-        return port_name
+        return topic_name
 
 
     def register_component(self, component_name, component_instance, mw_data):
