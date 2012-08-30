@@ -6,7 +6,7 @@ import mathutils
 import roslib; roslib.load_manifest('rospy'); roslib.load_manifest('geometry_msgs'); roslib.load_manifest('nav_msgs')
 
 import rospy
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from morse.middleware.ros.tfMessage import tfMessage
 
@@ -20,9 +20,14 @@ def init_extra_module(self, component_instance, function, mw_data):
     # Add the new method to the component
     component_instance.output_functions.append(function)
 
+    logger.setLevel(logging.INFO)
+
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
     if mw_data[1] == "post_pose":
         self._topics.append(rospy.Publisher(self.topic_name(component_instance), PoseStamped))
+        logger.info("posting PoseStamped message")
+    elif mw_data[1] == "post_pose_with_covariance":
+        self._topics.append(rospy.Publisher(self.topic_name(component_instance), PoseWithCovarianceStamped))
     elif mw_data[1] == "post_tf":
         self._topics.append(rospy.Publisher("/tf", tfMessage))
     else:
@@ -47,6 +52,25 @@ def init_extra_module(self, component_instance, function, mw_data):
     logger.info("Initialized the ROS pose sensor with frame_id '%s' and child_frame_id '%s'",
                 frame_id, child_frame_id)
 
+def get_orientation(self, component_instance):
+    """ Get the orientation from the loca_data and return a quaternion """
+    try:
+        quaternion = component_instance.local_data['orientation']
+    except:
+        euler = mathutils.Euler((component_instance.local_data['roll'],
+                                 component_instance.local_data['pitch'],
+                                 component_instance.local_data['yaw']))
+        quaternion = euler.to_quaternion()
+    return quaternion
+
+def get_pose(self, component_instance):
+    """ Get the pose from the local_data and return a ROS Pose """
+    pose = Pose()
+    pose.position.x = component_instance.local_data['x']
+    pose.position.y = component_instance.local_data['y']
+    pose.position.z = component_instance.local_data['z']
+    pose.orientation = get_orientation(self, component_instance)
+    return pose
 
 def post_tf(self, component_instance):
     component_name = component_instance.blender_obj.name
@@ -58,14 +82,6 @@ def post_tf(self, component_instance):
         publish = True
 
     if publish:
-        try:
-            quaternion = component_instance.local_data['quat']
-        except:
-            euler = mathutils.Euler((component_instance.local_data['roll'],
-                                     component_instance.local_data['pitch'],
-                                     component_instance.local_data['yaw']))
-            quaternion = euler.to_quaternion()
-
         t = TransformStamped()
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = frame_id
@@ -74,7 +90,7 @@ def post_tf(self, component_instance):
         t.transform.translation.y = component_instance.local_data['y']
         t.transform.translation.z = component_instance.local_data['z']
 
-        t.transform.rotation = quaternion
+        t.transform.rotation = get_orientation(self, component_instance)
 
         tfm = tfMessage([t])
 
@@ -82,7 +98,6 @@ def post_tf(self, component_instance):
             # publish the message on the correct topic    
             if str(topic.name) == str("/tf"):
                 topic.publish(tfm)
-
 
 def post_odometry(self, component_instance):
     """ Publish the data of the Pose as a Odometry message for fake localization 
@@ -96,24 +111,12 @@ def post_odometry(self, component_instance):
         publish = True
 
     if publish:
-        try:
-            quaternion = component_instance.local_data['quat']
-        except:
-            euler = mathutils.Euler((component_instance.local_data['roll'],
-                                     component_instance.local_data['pitch'],
-                                     component_instance.local_data['yaw']))
-            quaternion = euler.to_quaternion()
-
         odometry = Odometry()
         odometry.header.stamp = rospy.Time.now()
         odometry.header.frame_id = frame_id
         odometry.child_frame_id = child_frame_id
 
-        odometry.pose.pose.position.x = component_instance.local_data['x']
-        odometry.pose.pose.position.y = component_instance.local_data['y']
-        odometry.pose.pose.position.z = component_instance.local_data['z']
-
-        odometry.pose.pose.orientation = quaternion
+        odometry.pose.pose = get_pose(self, component_instance)
 
         for topic in self._topics:
             # publish the message on the correct topic    
@@ -121,7 +124,7 @@ def post_odometry(self, component_instance):
                 topic.publish(odometry)
 
 def post_pose(self, component_instance):
-    """ Publish the data of the Pose as a ROS-PoseStamped message
+    """ Publish the data of the Pose as a ROS PoseStamped message
     """
     component_name = component_instance.blender_obj.name
     frame_id = self._properties[component_name]['frame_id']
@@ -134,20 +137,36 @@ def post_pose(self, component_instance):
         poseStamped = PoseStamped()
         poseStamped.header.stamp = rospy.Time.now()
         poseStamped.header.frame_id = frame_id
-
-        poseStamped.pose.position.x = component_instance.local_data['x']
-        poseStamped.pose.position.y = component_instance.local_data['y']
-        poseStamped.pose.position.z = component_instance.local_data['z']
-
-        try:
-            quaternion = component_instance.local_data['quat']
-        except:
-            euler = mathutils.Euler((component_instance.local_data['roll'], component_instance.local_data['pitch'], component_instance.local_data['yaw']))
-            quaternion = euler.to_quaternion()
-
-        poseStamped.pose.orientation = quaternion
+        poseStamped.pose = get_pose(self, component_instance)
 
         for topic in self._topics:
             # publish the message on the correct topic    
             if str(topic.name) == self.topic_name(component_instance):
                 topic.publish(poseStamped)
+
+def post_pose_with_covariance(self, component_instance):
+    """ Publish the data of the Pose as a ROS PoseWithCovarianceStamped message
+    """
+    component_name = component_instance.blender_obj.name
+    frame_id = self._properties[component_name]['frame_id']
+    try:
+        publish = component_instance.local_data['valid']
+    except:
+        publish = True
+
+    if publish:
+        pose_msg = PoseWithCovarianceStamped()
+        pose_msg.header.stamp = rospy.Time.now()
+        pose_msg.header.frame_id = frame_id
+
+        pose_msg.pose.pose = get_pose(self, component_instance)
+
+        try:
+            pose_msg.pose.covariance = component_instance.local_data['covariance_matrix']
+        except:
+            pass
+
+        for topic in self._topics:
+            # publish the message on the correct topic    
+            if str(topic.name) == self.topic_name(component_instance):
+                topic.publish(pose_msg)
