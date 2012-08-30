@@ -16,6 +16,8 @@ def init_extra_module(self, component_instance, function, mw_data):
     """
     # Add the new method to the component
     component_instance.output_functions.append(function)
+    parent_name = component_instance.robot_parent.blender_obj.name
+    component_name = component_instance.blender_obj.name
 
     # Generate one publisher and one topic for each component that is a sensor and uses post_message
     if mw_data[1] == "post_imu_mav":
@@ -23,16 +25,31 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     self._seq = 0
 
+    # Extract the Middleware parameters
+    # additional parameter should be a dict
+    try:
+        frame_id = mw_data[3].get('frame_id', '/' + parent_name + '/imu')
+    except:
+        frame_id = '/' + parent_name + '/imu'
+
+    # create a new dictionary for this sensor if necessary
+    if component_name not in self._properties:
+        self._properties[component_name] = {}
+    # store the frame id in the dict
+    self._properties[component_name]['frame_id'] = frame_id
+
     logger.info('######## Initialized ROS ImuMav sensor ########')
 
 
 def post_imu_mav(self, component_instance):
     """ Publish the data of the IMU sensor as a custom ROS ImuMav message
     """
+    component_name = component_instance.blender_obj.name
+
     imu = ImuMav()
     imu.header.seq = self._seq
     imu.header.stamp = rospy.Time.now()
-    imu.header.frame_id = "/imu"
+    imu.header.frame_id = self._properties[component_name]['frame_id']
 
     imu.angular_velocity.x = component_instance.local_data['angular_velocity'][0]
     imu.angular_velocity.y = component_instance.local_data['angular_velocity'][1]
