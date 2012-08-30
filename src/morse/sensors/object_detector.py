@@ -18,6 +18,7 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
         super(self.__class__, self).__init__(obj, parent)
 
         self.add_property('_target', 'detector_target', 'Target')
+        self.add_property('_threshold', 3.0, 'DetectionDistance')
 
         # Identify an object as the target of the detection
         try:
@@ -36,7 +37,7 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
         self.local_data['x'] = 0.0
         self.local_data['y'] = 0.0
         self.local_data['z'] = 0.0
-        self.local_data['quat'] = mathutils.Quaternion()
+        self.local_data['orientation'] = mathutils.Quaternion()
         self.local_data['valid'] = False
 
         # reference for rotating world frame to sensor frame
@@ -55,7 +56,7 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
             self._target_position_3d.update(self._target_object)
 
             # for now we simply detect if we are closer than 4m
-            if self.position_3d.distance(self._target_position_3d) < 4:
+            if self.position_3d.distance(self._target_position_3d) < self._threshold:
                 detected = True
                 # get the transformation from sensor to target
                 (loc, rot, scale) = self.position_3d.transformation3d_with(self._target_position_3d).matrix.decompose()
@@ -65,6 +66,6 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
                 self.local_data['x'] = loc.x
                 self.local_data['y'] = loc.y
                 self.local_data['z'] = loc.z
-                self.local_data['quat'] = rot.copy()
+                self.local_data['orientation'] = rot.copy()
 
         self.local_data['valid'] = detected
