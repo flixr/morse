@@ -1,7 +1,7 @@
 import logging; logger = logging.getLogger("morse." + __name__)
 import bge
 import morse.modifiers.gaussian
-from math import radians, degrees
+from math import radians, degrees, cos
 import mathutils
 
 from morse.core.modifier import MorseModifierClass
@@ -45,15 +45,19 @@ class MorsePoseNoiseClass(MorseModifierClass):
         for variable in ['x', 'y', 'z']:
             component_instance.local_data[variable] = \
                 morse.modifiers.gaussian.gaussian(self._pos_std_dev, component_instance.local_data[variable])
-        # add noise on roll, pitch, yaw angles
-        # this is a very crude method, but sufficient for preliminary testing
+
+        # generate a gaussian noise rotation vector
+        rot_vec = mathutils.Vector((0.0, 0.0, 0.0))
+        for i in range(0, 3):
+            rot_vec[i] = morse.modifiers.gaussian.gaussian(self._rot_std_dev, rot_vec[i])
+        # convert rotation vector to a quaternion representing the random rotation
+        angle = rot_vec.length
+        axis = rot_vec / angle
+        noise_quat = mathutils.Quaternion(axis, angle)
         try:
-            quat = component_instance.local_data['quat']
-            euler = quat.to_euler()
-            for i in range(0, 3):
-                euler[i] = morse.modifiers.gaussian.gaussian(self._rot_std_dev, euler[i])
-            component_instance.local_data['quat'] = euler.to_quaternion()
+            component_instance.local_data['quat'] = (noise_quat * component_instance.local_data['quat']).normalized()
         except:
+            # for eulers this is a bit crude, maybe should use the noise_quat here as well...
             for variable in ['roll', 'pitch', 'yaw']:
                 component_instance.local_data[variable] = \
                     morse.modifiers.gaussian.gaussian(self._rot_std_dev, component_instance.local_data[variable])
