@@ -10,7 +10,7 @@ import mathutils
 def euler_angle(ob):
     rot_matrix = ob.worldOrientation
 
-    # XXX If we want to have the right handle, we definivly need to transpose
+    # XXX If we want to have the right handle, we definitively need to transpose
     # the matrix here, but why ?
     rot_matrix.transpose()
     euler = rot_matrix.to_euler()
@@ -22,18 +22,15 @@ def get_rotation_matrix(object):
     """ Return a the rotation matrix of an object.
     Used to transform another object to this one's coordinate system. """
 
-    import copy
-    return copy.copy(object.worldOrientation)
+    return object.worldOrientation.copy()
 
 def invert_rotation_matrix(object):
-    """ Return the inverse of the rotation matrix of an object.
+    """ Return the inverse (transpose) of the rotation matrix of an object.
 
     Used to get the position of another object with respect to
     this one. """
-    rotation_matrix = get_rotation_matrix(object)
-
-    # Return a new inverted matrix (requires Blender 2.58)
-    return rotation_matrix.inverted()
+    # Return a new transposed (inverted) matrix
+    return object.worldOrientation.transposed()
 
 
 def normalise_angle(angle):
@@ -66,16 +63,16 @@ def rotation_direction (current_angle, target_angle, tolerance, speed):
     return rotation
 
 
-def print_matrix_33 (matrix):
+def print_matrix_33(matrix):
     """ print_matrix_33 prints a 3x3 @matrix on stdout """
     for row in matrix:
-        line = "[%.4f %.4f %.4f]" % (row[0], row[1], row[2])
+        line = "[% .4f % .4f % .4f]" % (row[0], row[1], row[2])
         logger.info(line)
 
 
-def print_vector (vector):
+def print_vector(vector):
     """ print a vector with 4 decimals per value """
-    line = "[%.4f %.4f %.4f]" % (vector[0], vector[1], vector[2])
+    line = "[% .4f % .4f % .4f]" % (vector[0], vector[1], vector[2])
     logger.info(line)
 
 

@@ -9,11 +9,11 @@ class Transformation3d:
     world. Blender does not propose such an interface, only some
     rotation matrix and translation vector.
 
-    Internaly, we store an internal 4x4 matrix, and use it to compute
-    transformation.  the euler representation is then calculed on base
+    Internally, we store an internal 4x4 matrix, and use it to compute
+    transformation. The euler representation is then calculated on base
     of matrix (euler ZYX convention)
 
-    Note : Blender store its matrix in column major mode ...
+    Note : Blender < 2.62 stores its matrix in column major mode ...
     """
 
     def __init__(self, obj):
@@ -34,15 +34,15 @@ class Transformation3d:
             self.update(obj)
 
         # For use only by robots moving along the Y axis
-        self.correction_matrix = mathutils.Matrix(( [0.0, 1.0, 0.0], \
-                                                    [-1.0, 0.0, 0.0], \
-                                                    [0.0, 0.0, 1.0] ))
+        self.correction_matrix = mathutils.Matrix(([0.0, 1.0, 0.0], \
+                                                   [-1.0, 0.0, 0.0], \
+                                                   [0.0, 0.0, 1.0]))
 
 
     @property
     def x(self):
         """
-        Return the translation  against the x axle
+        Return the translation along the x-axis
         """
         if bge.logic.blenderVersion < (2,62,0):
             return self.matrix[3][0]
@@ -52,7 +52,7 @@ class Transformation3d:
     @property
     def y(self):
         """
-        Return the translation  against the y axle
+        Return the translation along the y-axis
         """
         if bge.logic.blenderVersion < (2,62,0):
             return self.matrix[3][1]
@@ -62,7 +62,7 @@ class Transformation3d:
     @property
     def z(self):
         """
-        Return the translation  against the z axle
+        Return the translation along the z-axis
         """
         if bge.logic.blenderVersion < (2,62,0):
             return self.matrix[3][2]
@@ -89,6 +89,13 @@ class Transformation3d:
         Returns Euler X axis, in radian
         """
         return self.euler.x
+
+    @property
+    def rotation(self):
+        """
+        Returns the rotation as a Quaternion
+        """
+        return self.matrix.to_quaternion()
 
     def transformation3d_with(self, t3d):
         """
@@ -130,14 +137,10 @@ class Transformation3d:
 
     def update(self, obj):
         """
-        Update the transformation3D to reflect the tranformation
+        Update the transformation3D to reflect the transformation
         between obj (a blender object) and the blender world origin
         """
-        rot_matrix = obj.orientation
-        self.matrix = mathutils.Matrix((rot_matrix[0], \
-                                        rot_matrix[1], \
-                                        rot_matrix[2]))
-        self.matrix.resize_4x4()
+        self.matrix = obj.worldOrientation.to_4x4()
 
         pos = obj.worldPosition
         for i in range(0, 3):
@@ -151,16 +154,16 @@ class Transformation3d:
 
     def update_Y_forward(self, obj):
         """
-        Update the transformation3D to reflect the tranformation
+        Update the transformation3D to reflect the transformation
         between obj (a blender object) and the blender world origin.
-        In this case, the robot moves forwad along the Y axis.
+        In this case, the robot moves forward along the Y axis.
 
         Change the values of yaw, pitch, roll for Blender vehicles
-        Robots that use the Blender vehicle constrainst move in the
+        Robots that use the Blender vehicle constraints move in the
         direction of the Y axis, contrary to most of the MORSE components
         that move along the X axis.
         """
-        rot_matrix = obj.orientation
+        rot_matrix = obj.worldOrientation
         self.matrix = mathutils.Matrix((rot_matrix[0], \
                                         rot_matrix[1], \
                                         rot_matrix[2]))
