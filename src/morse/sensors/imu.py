@@ -70,7 +70,7 @@ class ImuClass(morse.core.sensor.MorseSensorClass):
 
         # rot_b2i rotates body frame to imu frame
         # take the inverse rotation to transform a vector from body to imu
-        rates = self.rot_b2i.conjugated() * self.robot_w
+        rates = self.rot_b2i.inverted() * self.robot_w
         #logger.debug("rates in robot frame (% .4f, % .4f, % .4f)", self.robot_w[0], self.robot_w[1], self.robot_w[2])
         #logger.debug("rates in imu frame   (% .4f, % .4f, % .4f)", rates[0], rates[1], rates[2])
 
@@ -88,11 +88,11 @@ class ImuClass(morse.core.sensor.MorseSensorClass):
         if self.compute_offset_acceleration:
             # acceleration due to rotation (centripetal)
             # is zero if imu is mounted in robot center (assumed axis of rotation)
-            a_centripetal = self.rot_b2i.conjugated() * rates.cross(rates.cross(self.trans_b2i))
+            a_centripetal = self.rot_b2i.inverted() * rates.cross(rates.cross(self.trans_b2i))
             #logger.debug("centripetal acceleration (% .4f, % .4f, % .4f)", a_rot[0], a_rot[1], a_rot[2])
 
             # linear acceleration due to angular acceleration
-            a_alpha = self.rot_b2i.conjugated() * (self.robot_w - self.pav).cross(self.trans_b2i) * self.frequency
+            a_alpha = self.rot_b2i.inverted() * (self.robot_w - self.pav).cross(self.trans_b2i) * self.frequency
 
             # final measurement includes acceleration due to rotation center not in IMU
             accel_meas += a_centripetal + a_alpha
