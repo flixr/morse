@@ -58,14 +58,14 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
             # for now we simply detect if we are closer than 4m
             if self.position_3d.distance(self._target_position_3d) < self._threshold:
                 detected = True
-                # get the transformation from sensor to target
-                (loc, rot, scale) = self.position_3d.transformation3d_with(self._target_position_3d).matrix.decompose()
+                # get the transformation from sensor to object
+                tf_sensor2object = self.position_3d.transformation3d_with(self._target_position_3d)
 
                 # Store the data acquired by this sensor that could be sent
                 #  via a middleware.
-                self.local_data['x'] = loc.x
-                self.local_data['y'] = loc.y
-                self.local_data['z'] = loc.z
-                self.local_data['orientation'] = rot.copy()
+                self.local_data['x'] = tf_sensor2object.x
+                self.local_data['y'] = tf_sensor2object.y
+                self.local_data['z'] = tf_sensor2object.z
+                self.local_data['orientation'] = tf_sensor2object.rotation
 
         self.local_data['valid'] = detected
