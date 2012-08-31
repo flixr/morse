@@ -7,10 +7,10 @@ bpy.context.scene.game_settings.logic_step_max = 5
 bpy.context.scene.game_settings.physics_step_max = 5
 bpy.context.scene.game_settings.physics_step_sub = 2
 
+joystick_control = False
 with_stereo = True
 with_pose = True
 with_height = True
-joystick_control = False
 imu_noise = True
 with_object_detector = True
 object_noise = True
@@ -29,21 +29,21 @@ if joystick_control:
     motion.properties(YawDgain=6.0)
     motion.name = 'attitude'
     mav.append(motion)
-    motion.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
+    motion.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'read_attitude', 'morse/middleware/ros/read_asctec_attitude_ctrl'])
 
 else:
     waypoint = Actuator('rotorcraft_waypoint')
     waypoint.properties(YawPgain=10.0)
     waypoint.properties(YawDgain=6.0)
     mav.append(waypoint)
-    waypoint.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'read_pose', 'morse/middleware/ros/read_pose'])
+    waypoint.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'read_pose', 'morse/middleware/ros/read_pose'])
 
 
 imu = Sensor('imu')
 imu.rotate(x=math.pi)
 mav.append(imu)
 #imu.configure_mw('ros')
-imu.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_imu_mav', 'morse/middleware/ros/imu_mav'])
+imu.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'post_imu_mav', 'morse/middleware/ros/imu_mav'])
 if imu_noise:
     imu.configure_modifier('foo', ['morse.modifiers.imu_noise.MorseIMUNoiseClass', 'noisify',
                                    {'gyro_std': 0.1, 'accel_std': 0.8}])
@@ -61,9 +61,9 @@ if with_object_detector:
     mav.append(detector)
     detector.frequency(5)
     detector.properties(Target='PinkBox')
-    detector.configure_mw('ros', \
-                          [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose', \
-                           'morse/middleware/ros/pose', \
+    detector.properties(DetectionDistance=2)
+    detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose',
+                           'morse/middleware/ros/pose',
                            {'frame_id': '/detector'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
@@ -73,8 +73,7 @@ if with_pose:
     pose = Sensor('pose')
     pose.frequency(30)
     mav.append(pose)
-    pose.configure_mw('morse.middleware.ros_mw.rosclass',
-                      [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
+    pose.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
                        'morse/middleware/ros/pose',
                        {'frame_id': '/world', 'child_frame_id': '/mav'}])
 
@@ -97,7 +96,7 @@ if with_stereo:
     cameraL.properties(Vertical_Flip=True)
     cameraL.properties(cam_near=0.01)
     cameraL.frequency(5)
-    cameraL.configure_mw('morse.middleware.ros_mw.rosclass', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
+    cameraL.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'post_image_and_trigger', 'morse/middleware/ros/camera_with_trigger'])
 
     # Right camera
     right = Sensor('video_camera')
