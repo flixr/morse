@@ -32,9 +32,10 @@ def init_extra_module(self, component_instance, function, mw_data):
 
     # in body ned frame
     logger.debug("camera trans (%.4f, %.4f, %.4f)" % (loc.x, -loc.y, -loc.z))
+    logger.debug("rotate vector from blender body to cam frame: euler (%.4f, %.4f, %.4f)"% tuple(math.degrees(a) for a in rot.to_euler()))
     quat = mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(180.0)) * rot
     quat.conjugate()
-    logger.debug("rotate vector from body to cam frame: quaternion [xyzw] (%.4f, %.4f, %.4f, %.4f)", quat.x, quat.y, quat.z, quat.w)
+    logger.debug("rotate vector from body(ned) to cam frame: quaternion [xyzw] (%.4f, %.4f, %.4f, %.4f)", quat.x, quat.y, quat.z, quat.w)
     logger.debug("camera euler (%.4f, %.4f, %.4f)" % tuple(math.degrees(a) for a in quat.to_euler()))
 
     logger.info('######## ROS IMAGE PUBLISHER INITIALIZED ########')

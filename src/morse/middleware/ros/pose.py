@@ -28,6 +28,7 @@ def init_extra_module(self, component_instance, function, mw_data):
         logger.info("posting PoseStamped message")
     elif mw_data[1] == "post_pose_with_covariance":
         self._topics.append(rospy.Publisher(self.topic_name(component_instance), PoseWithCovarianceStamped))
+        logger.info("posting PoseWithCovarianceStamped message")
     elif mw_data[1] == "post_tf":
         self._topics.append(rospy.Publisher("/tf", tfMessage))
     else:

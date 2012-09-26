@@ -35,6 +35,7 @@ else:
     waypoint = Actuator('rotorcraft_waypoint')
     waypoint.properties(YawPgain=10.0)
     waypoint.properties(YawDgain=6.0)
+    waypoint.properties(MaxBankAngle=math.radians(10))
     mav.append(waypoint)
     waypoint.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'read_pose', 'morse/middleware/ros/read_pose'])
 
@@ -46,7 +47,7 @@ mav.append(imu)
 imu.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'post_imu_mav', 'morse/middleware/ros/imu_mav'])
 if imu_noise:
     imu.configure_modifier('foo', ['morse.modifiers.imu_noise.MorseIMUNoiseClass', 'noisify',
-                                   {'gyro_std': 0.1, 'accel_std': 0.8}])
+                                   {'gyro_std': 0.03, 'accel_std': 0.2}])
 
 if with_height:
     height = Sensor('altitude')
@@ -57,14 +58,30 @@ if with_height:
     height.configure_mw('ros', ['morse.middleware.ros_mw.ROSClass', 'post_height', 'morse/middleware/ros/laser_height'])
 
 if with_object_detector:
+    # feature detector for visualization in Rviz
+    viz = Sensor('object_detector')
+    viz.translate(x=0.0704, y=0.0500, z=-0.1037)
+    viz.rotate(x=-math.radians(125), z=-math.pi/2)
+    mav.append(viz)
+    viz.name = 'feature_viz'
+    viz.frequency(5)
+    viz.properties(Target='PinkBox')
+    viz.properties(DetectionDistance=2)
+    viz.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
+                           'morse/middleware/ros/pose',
+                           {'frame_id': '/cam_left_gt', 'child_frame_id': '/feature_viz'}])
+    # actual detector with covariance
     detector = Sensor('object_detector')
+    detector.translate(x=0.0704, y=0.0500, z=-0.1037)
+    detector.rotate(x=-math.radians(125), z=-math.pi/2)
     mav.append(detector)
+    detector.name = 'feature_pose'
     detector.frequency(5)
     detector.properties(Target='PinkBox')
     detector.properties(DetectionDistance=2)
-    detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose',
+    detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose_with_covariance',
                            'morse/middleware/ros/pose',
-                           {'frame_id': '/detector'}])
+                           {'frame_id': '/cam_left', 'child_frame_id': '/feature'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
                                             'noisify', {'pos_std': 0.01, 'rot_std': math.radians(4)}])
@@ -75,7 +92,7 @@ if with_pose:
     mav.append(pose)
     pose.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
                        'morse/middleware/ros/pose',
-                       {'frame_id': '/world', 'child_frame_id': '/mav'}])
+                       {'frame_id': '/blender', 'child_frame_id': '/mav_gt'}])
 
 if with_stereo:
     # The STEREO UNIT, where the two cameras will be fixed
