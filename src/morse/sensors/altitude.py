@@ -27,4 +27,4 @@ class AltitudeClass(morse.core.sensor.MorseSensorClass):
 
         # Store the data acquired by this sensor that could be sent
         #  via a middleware.
-        self.local_data['height'] = self.position_3d.z - self._offset
+        self.local_data['height'] = -(self.position_3d.z - self._offset)
