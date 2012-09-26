@@ -3,6 +3,7 @@ import bge
 import math
 import mathutils
 import morse.core.sensor
+import array
 
 class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
     """ Object detector sensor """
@@ -19,6 +20,8 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
 
         self.add_property('_target', 'detector_target', 'Target')
         self.add_property('_threshold', 3.0, 'DetectionDistance')
+        self.add_property('pos_std', 0.01, 'PosStd')
+        self.add_property('rot_std', math.radians(4), 'RotStd')
 
         # Identify an object as the target of the detection
         try:
@@ -39,6 +42,13 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
         self.local_data['z'] = 0.0
         self.local_data['orientation'] = mathutils.Quaternion()
         self.local_data['valid'] = False
+        self.local_data['covariance_matrix'] = array.array('f', map(float, [0] * 36))
+        for i in range(6):
+            if i < 3:
+                variance = self.pos_std * self.pos_std
+            else:
+                variance = self.rot_std * self.rot_std
+            self.local_data['covariance_matrix'][6*i+i] = variance
 
         # reference for rotating world frame to sensor frame
         self.rot_w2s = self.blender_obj.worldOrientation
