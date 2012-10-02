@@ -1,15 +1,11 @@
 import logging; logger = logging.getLogger("morse." + __name__)
-import bge
-import morse.modifiers.gaussian
+import random
 from math import radians, degrees, cos
 import mathutils
 
 from morse.core.modifier import MorseModifierClass
 
 class MorsePoseNoiseClass(MorseModifierClass):
-
-    _pos_std_dev = 0.05
-    _rot_std_dev = radians(5)
 
     def register_component(self, component_name, component_instance, mod_data):
         """ Add the corresponding function to a component. """
@@ -29,10 +25,12 @@ class MorsePoseNoiseClass(MorseModifierClass):
         else:
             logger.warning("Unknown function name for Pose Noise modifier. Check component_config.py file.")
 
-        # Extract the Modifier parameters from the dictionary
+        self._pos_std_dev = 0.05
+        self._rot_std_dev = radians(5)
+        # Extract the Modifier parameters from the dictionary if it is given
         try:
-            self._pos_std_dev = mod_data[2].get("pos_std", 0.05)
-            self._rot_std_dev = mod_data[2].get("rot_std", radians(5))
+            self._pos_std_dev = mod_data[2].get("pos_std", self._pos_std_dev)
+            self._rot_std_dev = mod_data[2].get("rot_std", self._rot_std_dev)
         except:
             pass
 
@@ -44,12 +42,12 @@ class MorsePoseNoiseClass(MorseModifierClass):
         # add noise on position
         for variable in ['x', 'y', 'z']:
             component_instance.local_data[variable] = \
-                morse.modifiers.gaussian.gaussian(self._pos_std_dev, component_instance.local_data[variable])
+                random.gauss(component_instance.local_data[variable], self._pos_std_dev)
 
         # generate a gaussian noise rotation vector
         rot_vec = mathutils.Vector((0.0, 0.0, 0.0))
         for i in range(0, 3):
-            rot_vec[i] = morse.modifiers.gaussian.gaussian(self._rot_std_dev, rot_vec[i])
+            rot_vec[i] = random.gauss(rot_vec[i], self._rot_std_dev)
         # convert rotation vector to a quaternion representing the random rotation
         angle = rot_vec.length
         if angle > 0:
@@ -64,5 +62,5 @@ class MorsePoseNoiseClass(MorseModifierClass):
             # for eulers this is a bit crude, maybe should use the noise_quat here as well...
             for variable in ['roll', 'pitch', 'yaw']:
                 component_instance.local_data[variable] = \
-                    morse.modifiers.gaussian.gaussian(self._rot_std_dev, component_instance.local_data[variable])
+                    random.gauss(component_instance.local_data[variable], self._rot_std_dev)
 

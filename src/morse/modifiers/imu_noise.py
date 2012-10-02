@@ -1,13 +1,9 @@
 import logging; logger = logging.getLogger("morse." + __name__)
-import bge
-import morse.modifiers.gaussian
+import random
 
 from morse.core.modifier import MorseModifierClass
 
 class MorseIMUNoiseClass(MorseModifierClass):
-
-    _gyro_std_dev = 0.05
-    _accel_std_dev = 0.5
 
     def register_component(self, component_name, component_instance, mod_data):
         """ Add the corresponding function to a component. """
@@ -27,10 +23,12 @@ class MorseIMUNoiseClass(MorseModifierClass):
         else:
             logger.warning("Unknown function name for IMU Noise modifier. Check component_config.py file.")
 
-        # Extract the Modifier parameters from the dictionary
+        self._gyro_std_dev = 0.5
+        self._accel_std_dev = 0.5
+        # Extract the Modifier parameters from the dictionary if it is given
         try:
-            self._gyro_std_dev = mod_data[2].get("gyro_std", 0.05)
-            self._accel_std_dev = mod_data[2].get("accel_std", 0.5)
+            self._gyro_std_dev = mod_data[2].get("gyro_std", self._gyro_std_dev)
+            self._accel_std_dev = mod_data[2].get("accel_std", self._accel_std_dev)
         except:
             pass
 
@@ -41,7 +39,7 @@ class MorseIMUNoiseClass(MorseModifierClass):
     def noisify(self, component_instance):
         for i in range(0, 3):
             component_instance.local_data['angular_velocity'][i] = \
-                morse.modifiers.gaussian.gaussian(self._gyro_std_dev, component_instance.local_data['angular_velocity'][i])
+                random.gauss(component_instance.local_data['angular_velocity'][i], self._gyro_std_dev)
             component_instance.local_data['linear_acceleration'][i] = \
-                morse.modifiers.gaussian.gaussian(self._accel_std_dev, component_instance.local_data['linear_acceleration'][i])
+                random.gauss(component_instance.local_data['linear_acceleration'][i], self._accel_std_dev)
 
