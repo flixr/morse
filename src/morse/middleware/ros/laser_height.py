@@ -22,19 +22,14 @@ def init_extra_module(self, component_instance, function, mw_data):
     self._topics.append(rospy.Publisher(self.topic_name(component_instance), Height))
     self._seq = 0
 
-    (loc, rot, scale) = component_instance.robot_parent.position_3d.transformation3d_with(component_instance.position_3d).matrix.decompose()
-
-    # store body to imu rotation and translation
-    self.rot_b2i = rot
-    self.trans_b2i = loc
-
     # Extract the Middleware parameters
     # additional parameter should be a dict
     # http://www.ros.org/wiki/geometry/CoordinateFrameConventions#Multi_Robot_Support
+    frame_id = '/map'
     try:
-        frame_id = mw_data[3].get("frame_id", '/map')
+        frame_id = mw_data[3].get("frame_id", frame_id)
     except:
-        frame_id = '/map'
+        pass
 
     # create a new dictionary for this sensor if necessary
     if component_name not in self._properties:
@@ -56,7 +51,7 @@ def post_height(self, component_instance):
     height.header.frame_id = self._properties[component_name]['frame_id']
     height.height = component_instance.local_data['height']
     height.distance = component_instance.local_data['height']
-    height.height_variance = 0.01
+    height.height_variance = 0.05
 
     for topic in self._topics:
         # publish the message on the correct topic
