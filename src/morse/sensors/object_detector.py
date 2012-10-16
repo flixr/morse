@@ -20,8 +20,12 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
 
         self.add_property('_target', 'detector_target', 'Target')
         self.add_property('_threshold', 3.0, 'DetectionDistance')
-        self.add_property('pos_std', 0.01, 'PosStd')
+        self.add_property('pos_std_x', 0.01, 'PosStdX')
+        self.add_property('pos_std_y', 0.01, 'PosStdY')
+        self.add_property('pos_std_z', 0.01, 'PosStdZ')
         self.add_property('rot_std', math.radians(4), 'RotStd')
+
+        self.pos_std_array = array.array('f', [self.pos_std_x, self.pos_std_y, self.pos_std_z])
 
         # Identify an object as the target of the detection
         try:
@@ -45,7 +49,7 @@ class ObjectDetectorClass(morse.core.sensor.MorseSensorClass):
         self.local_data['covariance_matrix'] = array.array('f', map(float, [0] * 36))
         for i in range(6):
             if i < 3:
-                variance = self.pos_std * self.pos_std
+                variance = self.pos_std_array[i] * self.pos_std_array[i]
             else:
                 variance = self.rot_std * self.rot_std
             self.local_data['covariance_matrix'][6*i+i] = variance

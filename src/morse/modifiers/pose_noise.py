@@ -25,8 +25,8 @@ class MorsePoseNoiseClass(MorseModifierClass):
         else:
             logger.warning("Unknown function name for Pose Noise modifier. Check component_config.py file.")
 
-        self._pos_std_dev = 0.05
-        self._rot_std_dev = radians(5)
+        self._pos_std_dev = [0.05] * 3
+        self._rot_std_dev = [radians(5)] * 3
         # Extract the Modifier parameters from the dictionary if it is given
         try:
             self._pos_std_dev = mod_data[2].get("pos_std", self._pos_std_dev)
@@ -34,20 +34,23 @@ class MorsePoseNoiseClass(MorseModifierClass):
         except:
             pass
 
-        logger.info("Adding noise to Pose with standard deviations: position %.4f, rotation %.4f deg", \
-                    self._pos_std_dev, degrees(self._rot_std_dev))
+        logger.info("Adding noise to Pose with standard deviations: position (%.4f %.4f %.4f), rotation (%.4f %.4f %.4f) deg", \
+                    self._pos_std_dev[0], self._pos_std_dev[1], self._pos_std_dev[2], \
+                    degrees(self._rot_std_dev[0]), degrees(self._rot_std_dev[1]), degrees(self._rot_std_dev[2]))
 
 
     def noisify(self, component_instance):
         # add noise on position
+        i = 0
         for variable in ['x', 'y', 'z']:
             component_instance.local_data[variable] = \
-                random.gauss(component_instance.local_data[variable], self._pos_std_dev)
+                random.gauss(component_instance.local_data[variable], self._pos_std_dev[i])
+            i = i + 1
 
         # generate a gaussian noise rotation vector
         rot_vec = mathutils.Vector((0.0, 0.0, 0.0))
         for i in range(0, 3):
-            rot_vec[i] = random.gauss(rot_vec[i], self._rot_std_dev)
+            rot_vec[i] = random.gauss(rot_vec[i], self._rot_std_dev[i])
         # convert rotation vector to a quaternion representing the random rotation
         angle = rot_vec.length
         if angle > 0:
@@ -62,5 +65,5 @@ class MorsePoseNoiseClass(MorseModifierClass):
             # for eulers this is a bit crude, maybe should use the noise_quat here as well...
             for variable in ['roll', 'pitch', 'yaw']:
                 component_instance.local_data[variable] = \
-                    random.gauss(component_instance.local_data[variable], self._rot_std_dev)
+                    random.gauss(component_instance.local_data[variable], self._rot_std_dev[i])
 

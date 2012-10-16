@@ -11,7 +11,7 @@ joystick_control = False
 with_stereo = True
 with_pose = True
 with_height = True
-imu_noise = True
+imu_noise = False
 with_object_detector = True
 object_noise = True
 
@@ -64,7 +64,7 @@ if with_object_detector:
     viz.rotate(x=-math.radians(125), z=-math.pi/2)
     mav.append(viz)
     viz.name = 'feature_viz'
-    viz.frequency(5)
+    viz.frequency(2)
     viz.properties(Target='PinkBox')
     viz.properties(DetectionDistance=2)
     viz.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
@@ -76,15 +76,17 @@ if with_object_detector:
     detector.rotate(x=-math.radians(125), z=-math.pi/2)
     mav.append(detector)
     detector.name = 'feature_pose'
-    detector.frequency(5)
+    detector.frequency(2)
     detector.properties(Target='PinkBox')
+    detector.properties(PosStdZ=0.2)
+    detector.properties(RotStd=math.radians(4))
     detector.properties(DetectionDistance=2)
     detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose_with_covariance',
                            'morse/middleware/ros/pose',
                            {'frame_id': '/cam_left', 'child_frame_id': '/feature'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
-                                            'noisify', {'pos_std': 0.01, 'rot_std': math.radians(4)}])
+                                            'noisify', {'pos_std': [0.01, 0.01, 0.2], 'rot_std': [math.radians(4)] * 3}])
 
 if with_pose:
     pose = Sensor('pose')
