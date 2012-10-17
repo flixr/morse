@@ -2,14 +2,16 @@ from morse.builder.morsebuilder import *
 
 import math
 
-bpy.context.scene.game_settings.fps = 30
+bpy.context.scene.game_settings.fps = 60
 bpy.context.scene.game_settings.logic_step_max = 5
 bpy.context.scene.game_settings.physics_step_max = 5
 bpy.context.scene.game_settings.physics_step_sub = 2
 
 joystick_control = False
 with_stereo = True
+with_pose_tf = True
 with_pose = True
+with_velocity = True
 with_height = True
 imu_noise = False
 with_object_detector = True
@@ -88,13 +90,29 @@ if with_object_detector:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
                                             'noisify', {'pos_std': [0.01, 0.01, 0.2], 'rot_std': [math.radians(4)] * 3}])
 
+if with_pose_tf:
+    pose_tf = Sensor('pose')
+    pose_tf.frequency(30)
+    mav.append(pose_tf)
+    pose_tf.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
+                         'morse/middleware/ros/pose',
+                         {'frame_id': '/blender', 'child_frame_id': '/mav_gt'}])
+
 if with_pose:
-    pose = Sensor('pose')
-    pose.frequency(30)
-    mav.append(pose)
-    pose.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_tf',
-                       'morse/middleware/ros/pose',
-                       {'frame_id': '/blender', 'child_frame_id': '/mav_gt'}])
+    pose_gt = Sensor('pose')
+    pose_gt.frequency(30)
+    mav.append(pose_gt)
+    pose_gt.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose',
+                         'morse/middleware/ros/pose',
+                         {'frame_id': '/blender'}])
+
+if with_velocity:
+    velocity_gt = Sensor('velocity')
+    velocity_gt.frequency(30)
+    mav.append(velocity_gt)
+    velocity_gt.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_twist',
+                         'morse/middleware/ros/velocity',
+                         {'frame_id': '/blender'}])
 
 if with_stereo:
     # The STEREO UNIT, where the two cameras will be fixed
