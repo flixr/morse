@@ -23,7 +23,7 @@ class PoseClass(morse.core.sensor.MorseSensorClass):
         self.local_data['pitch'] = 0.0
         self.local_data['roll'] = 0.0
 
-        logger.info('Component initialized')
+        logger.info("Component initialized, runs at %.2f Hz", self.frequency)
 
 
     def default_action(self):
