@@ -75,6 +75,7 @@ MORSE_MIDDLEWARE_DICT = {
         'pr2_posture': [MORSE_MIDDLEWARE_MODULE['ros'], 'post_jointState', 'morse/middleware/ros/pr2_posture'],
         'semantic_camera': [MORSE_MIDDLEWARE_MODULE['ros'], 'post_string', 'morse/middleware/ros/semantic_camera'],
         'sick': [MORSE_MIDDLEWARE_MODULE['ros'], 'post_2DLaserScan', 'morse/middleware/ros/sick'],
+        'velocity': [MORSE_MIDDLEWARE_MODULE['ros'], 'post_twist', 'morse/middleware/ros/velocity'],
         'video_camera': [MORSE_MIDDLEWARE_MODULE['ros'], 'post_image', 'morse/middleware/ros/camera'],
 
         'light': [MORSE_MIDDLEWARE_MODULE['ros'], 'read_switch', 'morse/middleware/ros/light'],
