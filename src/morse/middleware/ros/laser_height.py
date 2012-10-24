@@ -51,7 +51,7 @@ def post_height(self, component_instance):
     height.header.frame_id = self._properties[component_name]['frame_id']
     height.height = component_instance.local_data['height']
     height.distance = component_instance.local_data['height']
-    height.height_variance = 0.01
+    height.height_variance = 0.0004
 
     for topic in self._topics:
         # publish the message on the correct topic

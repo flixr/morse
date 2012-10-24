@@ -8,12 +8,13 @@ bpy.context.scene.game_settings.physics_step_max = 5
 bpy.context.scene.game_settings.physics_step_sub = 2
 
 joystick_control = False
-with_stereo = True
+with_stereo = False
+with_pose_rel = True
 with_pose_tf = True
 with_pose = True
 with_velocity = True
 with_height = True
-imu_noise = False
+imu_noise = True
 with_object_detector = True
 object_noise = True
 
@@ -62,8 +63,8 @@ if with_height:
 if with_object_detector:
     # feature detector for visualization in Rviz
     viz = Sensor('object_detector')
-    viz.translate(x=0.0704, y=0.0500, z=-0.1037)
-    viz.rotate(x=-math.radians(125), z=-math.pi/2)
+    viz.translate(x=0.0704, y=0.0500, z= -0.1037)
+    viz.rotate(x= -math.radians(125), z= -math.pi / 2)
     mav.append(viz)
     viz.name = 'feature_viz'
     viz.frequency(2)
@@ -74,17 +75,17 @@ if with_object_detector:
                            {'frame_id': '/cam_left_gt', 'child_frame_id': '/feature_viz'}])
     # actual detector with covariance
     detector = Sensor('object_detector')
-    detector.translate(x=0.0704, y=0.0500, z=-0.1037)
-    detector.rotate(x=-math.radians(125), z=-math.pi/2)
+    detector.translate(x=0.0704, y=0.0500, z= -0.1037)
+    detector.rotate(x= -math.radians(125), z= -math.pi / 2)
     mav.append(detector)
     detector.name = 'feature_pose'
     detector.frequency(2)
     detector.properties(Target='PinkBox')
-    detector.properties(PosStdZ=0.2)
+    detector.properties(PosStdZ=0.1)
     detector.properties(RotStd=math.radians(4))
     detector.properties(DetectionDistance=2)
-    detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose_with_covariance',
-                           'morse/middleware/ros/pose',
+    detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose_with_covariance_trigger',
+                           'morse/middleware/ros/pose_trigger',
                            {'frame_id': '/cam_left', 'child_frame_id': '/feature'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
@@ -101,6 +102,7 @@ if with_pose_tf:
 if with_pose:
     pose_gt = Sensor('pose')
     pose_gt.frequency(30)
+    pose_gt.rotate(x=math.pi)
     mav.append(pose_gt)
     pose_gt.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose',
                          'morse/middleware/ros/pose',
@@ -129,6 +131,8 @@ if with_stereo:
     cameraL.properties(capturing=True)
     cameraL.properties(cam_width=376)
     cameraL.properties(cam_height=240)
+    # opening angle: arctan(cam_focal/(32/2))
+    # cam_focal of 23 -> 55deg opening angle
     cameraL.properties(cam_focal=23)
     cameraL.properties(Vertical_Flip=True)
     cameraL.properties(cam_near=0.01)
@@ -147,6 +151,16 @@ if with_stereo:
     right.properties(cam_near=0.01)
     right.frequency(5)
     right.configure_mw('ros')
+
+if with_pose_rel:
+    poseRel = Sensor('delta_pose')
+    poseRel.translate(x=0.0704, y=0.05, z= -0.1037)
+    poseRel.rotate(x= -math.radians(125), z= -math.radians(90))
+    poseRel.frequency(5)
+    mav.append(poseRel)
+    poseRel.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_visual_odometry', 'morse/middleware/ros/visual_odometry'])
+    poseRel.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
+                                       'noisify', {'pos_std': [0.01, 0.01, 0.01], 'rot_std': [math.radians(1)] * 3}])
 
 #env = Environment('indoors-1/boxes_dotted')
 env = Environment('indoors-1/indoor-1_wp_marker')
