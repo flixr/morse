@@ -2,7 +2,7 @@ from morse.builder.morsebuilder import *
 
 import math
 
-bpy.context.scene.game_settings.fps = 60
+bpy.context.scene.game_settings.fps = 150
 bpy.context.scene.game_settings.logic_step_max = 5
 bpy.context.scene.game_settings.physics_step_max = 5
 bpy.context.scene.game_settings.physics_step_sub = 2
@@ -79,17 +79,17 @@ if with_object_detector:
     detector.rotate(x= -math.radians(125), z= -math.pi / 2)
     mav.append(detector)
     detector.name = 'feature_pose'
-    detector.frequency(2)
-    detector.properties(Target='PinkBox')
-    detector.properties(PosStdZ=0.1)
-    detector.properties(RotStd=math.radians(4))
+    detector.frequency(3)
+    detector.properties(Target='feature')
+    detector.properties(PosStdZ=0.01)
+    detector.properties(RotStd=math.radians(1))
     detector.properties(DetectionDistance=2)
     detector.configure_mw('ros', [MORSE_MIDDLEWARE_MODULE['ros'], 'post_pose_with_covariance_trigger',
                            'morse/middleware/ros/pose_trigger',
                            {'frame_id': '/cam_left', 'child_frame_id': '/feature'}])
     if object_noise:
         detector.configure_modifier('bar', ['morse.modifiers.pose_noise.MorsePoseNoiseClass',
-                                            'noisify', {'pos_std': [0.01, 0.01, 0.2], 'rot_std': [math.radians(4)] * 3}])
+                                            'noisify', {'pos_std': [0.01, 0.01, 0.01], 'rot_std': [math.radians(1)] * 3}])
 
 if with_pose_tf:
     pose_tf = Sensor('pose')
@@ -163,7 +163,7 @@ if with_pose_rel:
                                        'noisify', {'pos_std': [0.01, 0.01, 0.01], 'rot_std': [math.radians(1)] * 3}])
 
 #env = Environment('indoors-1/boxes_dotted')
-env = Environment('indoors-1/indoor-1_wp_marker')
+env = Environment('indoors-1/indoor-1_feature')
 #env = Environment('land-1/buildings_1')
 env.show_framerate(True)
 #env.show_physics(True)
