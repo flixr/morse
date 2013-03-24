@@ -34,6 +34,14 @@ class CompoundSensor(SensorCreator):
         # Ensures this is called only when all components have been (automatically) renamed.
         self.properties(sensors = ",".join([str(s) for s in self.sensors]))
 
+class DeltaPose(SensorCreator):
+    def __init__(self, name=None):
+        SensorCreator.__init__(self, name, "morse.sensors.delta_pose.DeltaPose", "dpose")
+        mesh = Cylinder("DeltaPoseCylinder")
+        mesh.scale = (.02, .02, .02)
+        mesh.color(.5, .5, .5)
+        self.append(mesh)
+
 class GPS(SensorCreator):
     def __init__(self, name=None):
         SensorCreator.__init__(self, name, "morse.sensors.gps.GPS", "gps")
