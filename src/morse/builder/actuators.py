@@ -112,6 +112,12 @@ class RotorcraftAttitude(ActuatorCreator):
             "morse.actuators.rotorcraft_attitude.RotorcraftAttitude",\
             "rotorcraft_attitude")
 
+class RotorcraftVelocity(ActuatorCreator):
+    def __init__(self, name=None):
+        ActuatorCreator.__init__(self, name,
+            "morse.actuators.rotorcraft_velocity.RotorcraftVelocity", \
+            "rotorcraft_velocity")
+
 class RotorcraftWaypoint(ActuatorCreator):
     def __init__(self, name=None):
         ActuatorCreator.__init__(self, name,
